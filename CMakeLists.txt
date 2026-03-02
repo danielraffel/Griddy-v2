@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.17)
 
 # Set minimum macOS version before defining the project
 set(CMAKE_OSX_DEPLOYMENT_TARGET "15.0" CACHE STRING "Minimum macOS version")
@@ -85,10 +85,17 @@ juce_add_plugin(${PROJECT_NAME}
     PRODUCT_NAME ${PROJECT_NAME}
     VERSION ${PLUGIN_VERSION}
     AU_MAIN_TYPE kAudioUnitType_MIDIProcessor
-    AU_EXPORT_PREFIX "${PROJECT_NAME}AU"
+    AU_EXPORT_PREFIX "GriddyAU"
     AU_SANDBOX_SAFE TRUE
     VST3_CATEGORIES "Drum|Tools"
 )
+
+# ==============================================================================
+# Visage GPU UI Framework
+# ==============================================================================
+set(VISAGE_BUILD_EXAMPLES OFF CACHE BOOL "Build Visage examples" FORCE)
+set(VISAGE_BUILD_TESTS OFF CACHE BOOL "Build Visage tests" FORCE)
+add_subdirectory(external/visage)
 
 juce_generate_juce_header(${PROJECT_NAME})
 
@@ -97,11 +104,30 @@ target_sources(${PROJECT_NAME} PRIVATE
     Source/PluginProcessor.h
     Source/PluginEditor.cpp
     Source/PluginEditor.h
+    Source/Visage/JuceVisageBridge.cpp
+    Source/Visage/JuceVisageBridge.h
+    Source/Grids/GridsEngine.cpp
+    Source/Grids/GridsEngine.h
+    Source/Grids/GridsPatternData.h
+    Source/Grids/EuclideanEngine.h
+    Source/Grids/EuclideanTables.h
+    Source/Settings/SettingsManager.h
+    Source/UI/XYPadFrame.h
+    Source/UI/LEDMatrixFrame.h
 )
 
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
 
-# No additional include directories needed
+target_include_directories(${PROJECT_NAME} PRIVATE
+    ${CMAKE_SOURCE_DIR}/Source
+    ${CMAKE_SOURCE_DIR}/external/visage
+    ${CMAKE_SOURCE_DIR}/external/visage/visage_ui
+    ${CMAKE_SOURCE_DIR}/external/visage/visage_graphics
+    ${CMAKE_SOURCE_DIR}/external/visage/visage_windowing
+    ${CMAKE_SOURCE_DIR}/external/visage/visage_app
+    ${CMAKE_SOURCE_DIR}/external/visage/visage_widgets
+    ${CMAKE_SOURCE_DIR}/external/visage/visage_utils
+)
 
 target_compile_definitions(${PROJECT_NAME} PUBLIC
     JUCE_VST3_CAN_REPLACE_VST2=0
@@ -123,7 +149,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     juce::juce_graphics
     juce::juce_gui_basics
     juce::juce_gui_extra
-    ${PROJECT_NAME}_Resources
+    visage
 )
 
 # ==============================================================================

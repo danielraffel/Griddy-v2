@@ -8,7 +8,8 @@
 
 | File | Purpose |
 |------|---------|
-| <!-- e.g. Source/Visage/Bridge.h/cpp --> | <!-- Primary bridge: window, events, focus --> |
+| `Source/Visage/JuceVisageBridge.h/cpp` | Primary bridge: window, events, focus |
+| `Source/PluginEditor.h/cpp` | Plugin editor with Visage UI creation |
 
 ## Visage Patches Applied
 
@@ -17,21 +18,18 @@
 - [ ] MTKView 60 FPS cap (windowing_macos.mm) — Prevent excessive GPU on ProMotion displays
 - [ ] Popup menu overflow positioning (popup_menu.cpp) — Above-position fix
 - [ ] Single-line Up/Down arrows (text_editor.cpp) — Up→start, Down→end
-- [ ] setAlwaysOnTop guard (application_window.cpp) — Only call when always_on_top_ is true
+- [x] setAlwaysOnTop guard (application_window.cpp) — Only call when always_on_top_ is true
+- [x] setDpiScale native_bounds recalculation (frame.h) — Fix child frames rendering at wrong size when DPI changes after setBounds
 
 ## Destruction Sequence
 
-<!-- Document your plugin editor destructor ordering here -->
-<!-- Example:
-1. Stop timers
-2. shutdownRendering()
-3. Destroy overlays/modals
-4. Destroy panels
-5. Disconnect bridge from frame tree
-6. removeAllChildren()
-7. Destroy root frame
-8. Destroy bridge
--->
+1. Stop timers (`stopTimer()`)
+2. `bridge_->shutdownRendering()`
+3. `rootFrame_->removeAllChildren()`
+4. Null child pointers (`xyPad_ = nullptr`, `ledMatrix_ = nullptr`)
+5. Disconnect bridge from frame tree (`bridge_->setRootFrame(nullptr)`)
+6. Destroy root frame (`rootFrame_.reset()`)
+7. Destroy bridge (`bridge_.reset()`)
 
 ## PopupMenu Instances
 
@@ -55,4 +53,4 @@
 
 ## Project-Specific Learnings
 
-<!-- Debugging insights, workarounds, and patterns specific to this project -->
+- **DPI scaling bug in `Frame::setDpiScale()`**: Visage's `Frame::setDpiScale()` did NOT recalculate `native_bounds_` when DPI changes. If child frames get `setBounds()` called before DPI is propagated (e.g., in `createVisageUI()` before the bridge creates the embedded window), they render at incorrect size. Fix: (1) Patch `setDpiScale` in `frame.h` to recalculate `native_bounds_` from `bounds_ * dpi_scale_` when the scale changes, (2) Always set child bounds from `resized()` / `layoutChildren()` not just once in `createVisageUI()`.
