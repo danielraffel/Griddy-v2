@@ -2,9 +2,15 @@
 
 #include <JuceHeader.h>
 #include "GriddyAppEngine.h"
-#include "XYPad.h"
-
-class OnboardingOverlay;
+#include "Visage/JuceVisageBridge.h"
+#include "UI/XYPadFrame.h"
+#include "UI/LEDMatrixFrame.h"
+#include "UI/DensitySliderFrame.h"
+#include "UI/RotaryKnobFrame.h"
+#include "UI/ResetButtonFrame.h"
+#include "UI/TransportButtonFrame.h"
+#include "UI/TempoFrame.h"
+#include "UI/ToggleFrame.h"
 
 class GriddyAppMainComponent : public juce::AudioAppComponent,
                                private juce::Timer
@@ -19,51 +25,37 @@ public:
 
     void paint(juce::Graphics& g) override;
     void resized() override;
-    void mouseDown(const juce::MouseEvent& event) override;
 
 private:
     void timerCallback() override;
-    void updateLabels();
-    void configureSectionLabel(juce::Label& label, const juce::String& text);
-    void drawLEDMatrix(juce::Graphics& g, juce::Rectangle<int> bounds);
+    void createVisageUI();
+    void layoutChildren();
+    void updateFromEngine();
 
     GriddyAppEngine engine_;
 
-    XYPad xyPad_;
+    // Visage bridge and root frame
+    std::unique_ptr<JuceVisageBridge> bridge_;
+    std::unique_ptr<visage::Frame> rootFrame_;
 
-    juce::Slider tempoSlider_;
-    juce::TextEditor tempoEditor_;
-    juce::Label tempoUnitLabel_;
+    // Frame pointers (owned by rootFrame_ via addChild)
+    XYPadFrame* xyPad_ = nullptr;
+    LEDMatrixFrame* ledMatrix_ = nullptr;
+    DensitySliderFrame* bdDensity_ = nullptr;
+    DensitySliderFrame* sdDensity_ = nullptr;
+    DensitySliderFrame* hhDensity_ = nullptr;
+    RotaryKnobFrame* chaosKnob_ = nullptr;
+    RotaryKnobFrame* swingKnob_ = nullptr;
+    RotaryKnobFrame* bdVelKnob_ = nullptr;
+    RotaryKnobFrame* sdVelKnob_ = nullptr;
+    RotaryKnobFrame* hhVelKnob_ = nullptr;
+    ResetButtonFrame* resetButton_ = nullptr;
+    TransportButtonFrame* playButton_ = nullptr;
+    TransportButtonFrame* recordButton_ = nullptr;
+    TempoFrame* tempoControl_ = nullptr;
+    ToggleFrame* midiOnlyToggle_ = nullptr;
 
-    juce::Slider bdDensity_;
-    juce::Slider sdDensity_;
-    juce::Slider hhDensity_;
-
-    juce::Slider bdVelocity_;
-    juce::Slider sdVelocity_;
-    juce::Slider hhVelocity_;
-
-    juce::Slider chaosSlider_;
-    juce::Slider swingSlider_;
-
-    juce::TextButton playButton_ { "Play" };
-    juce::TextButton recordButton_ { "Record" };
-    juce::ToggleButton midiOnlyToggle_ { "MIDI-only" };
-
-    juce::Label densityGroupLabel_;
-    juce::Label velocityGroupLabel_;
-    juce::Label chaosGroupLabel_;
-    juce::Label swingGroupLabel_;
-    juce::Label statusLabel_;
-
-    // LED matrix data (updated from engine on timer)
-    std::array<uint8_t, 32> bdPattern_{};
-    std::array<uint8_t, 32> sdPattern_{};
-    std::array<uint8_t, 32> hhPattern_{};
-    int currentStep_ = -1;
-    juce::Rectangle<int> ledMatrixBounds_;
-
-    bool tempoEditorWasFocused_ = false;
+    bool uiCreated_ = false;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GriddyAppMainComponent)
 };

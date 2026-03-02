@@ -249,8 +249,16 @@ if(IOS OR CMAKE_SYSTEM_NAME STREQUAL "iOS")
         App/GriddyMidiOut.h
         App/GriddySampleLibrary.cpp
         App/GriddySampleLibrary.h
-        App/XYPad.cpp
-        App/XYPad.h
+        Source/Visage/JuceVisageBridge.cpp
+        Source/Visage/JuceVisageBridge.h
+        Source/UI/XYPadFrame.h
+        Source/UI/LEDMatrixFrame.h
+        Source/UI/DensitySliderFrame.h
+        Source/UI/RotaryKnobFrame.h
+        Source/UI/ResetButtonFrame.h
+        Source/UI/TransportButtonFrame.h
+        Source/UI/TempoFrame.h
+        Source/UI/ToggleFrame.h
         Source/Settings/SettingsManager.h
         Source/Grids/GridsEngine.cpp
         Source/Grids/GridsEngine.h
