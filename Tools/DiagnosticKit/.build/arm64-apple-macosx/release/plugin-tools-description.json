@@ -1,0 +1,319 @@
+{
+  "builtTestProducts" : [
+
+  ],
+  "copyCommands" : {
+
+  },
+  "explicitTargetDependencyImportCheckingMode" : {
+    "none" : {
+
+    }
+  },
+  "generatedSourceTargetSet" : [
+
+  ],
+  "pluginDescriptions" : [
+
+  ],
+  "swiftCommands" : {
+    "C.DiagnosticKit-arm64-apple-macosx26.0-release.module" : {
+      "executable" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "fileList" : "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/sources",
+      "importPath" : "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/Modules",
+      "inputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/Sources/Config/AppConfig.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/Sources/DiagnosticApp.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/Sources/Services/DiagnosticCollector.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/Sources/Services/GitHubUploader.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/Sources/Views/MainView.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/swift-version--58304C5D6DBC2206.txt"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/sources"
+        }
+      ],
+      "isLibrary" : false,
+      "moduleName" : "DiagnosticKit",
+      "moduleOutputPath" : "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/Modules/DiagnosticKit.swiftmodule",
+      "objects" : [
+        "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/AppConfig.swift.o",
+        "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/DiagnosticApp.swift.o",
+        "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/DiagnosticCollector.swift.o",
+        "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/GitHubUploader.swift.o",
+        "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/MainView.swift.o"
+      ],
+      "otherArguments" : [
+        "-target",
+        "arm64-apple-macosx13.0",
+        "-whole-module-optimization",
+        "-num-threads",
+        "10",
+        "-serialize-diagnostics",
+        "-O",
+        "-j10",
+        "-DSWIFT_PACKAGE",
+        "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+        "-module-cache-path",
+        "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/ModuleCache",
+        "-parseable-output",
+        "-Xfrontend",
+        "-entry-point-function-name",
+        "-Xfrontend",
+        "DiagnosticKit_main",
+        "-swift-version",
+        "5",
+        "-plugin-path",
+        "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+        "-sdk",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-F",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+        "-I",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-L",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+        "-g",
+        "-Xcc",
+        "-isysroot",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+        "-Xcc",
+        "-F",
+        "-Xcc",
+        "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+        "-Xcc",
+        "-fPIC",
+        "-Xcc",
+        "-g",
+        "-package-name",
+        "diagnostickit"
+      ],
+      "outputFileMapPath" : "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/output-file-map.json",
+      "outputs" : [
+        {
+          "kind" : "file",
+          "name" : "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/AppConfig.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/DiagnosticApp.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/DiagnosticCollector.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/GitHubUploader.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/MainView.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/Modules/DiagnosticKit.swiftmodule"
+        }
+      ],
+      "prepareForIndexing" : false,
+      "sources" : [
+        "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/Sources/Config/AppConfig.swift",
+        "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/Sources/DiagnosticApp.swift",
+        "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/Sources/Services/DiagnosticCollector.swift",
+        "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/Sources/Services/GitHubUploader.swift",
+        "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/Sources/Views/MainView.swift"
+      ],
+      "tempsPath" : "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build",
+      "wholeModuleOptimization" : true
+    }
+  },
+  "swiftFrontendCommands" : {
+
+  },
+  "swiftTargetScanArgs" : {
+    "DiagnosticKit" : [
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc",
+      "-module-name",
+      "DiagnosticKit",
+      "-package-name",
+      "diagnostickit",
+      "-c",
+      "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/Sources/Config/AppConfig.swift",
+      "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/Sources/DiagnosticApp.swift",
+      "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/Sources/Services/DiagnosticCollector.swift",
+      "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/Sources/Services/GitHubUploader.swift",
+      "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/Sources/Views/MainView.swift",
+      "-I",
+      "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/Modules",
+      "-target",
+      "arm64-apple-macosx13.0",
+      "-whole-module-optimization",
+      "-num-threads",
+      "10",
+      "-serialize-diagnostics",
+      "-O",
+      "-j10",
+      "-DSWIFT_PACKAGE",
+      "-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE",
+      "-module-cache-path",
+      "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/ModuleCache",
+      "-parseable-output",
+      "-Xfrontend",
+      "-entry-point-function-name",
+      "-Xfrontend",
+      "DiagnosticKit_main",
+      "-swift-version",
+      "5",
+      "-plugin-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing",
+      "-sdk",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-F",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+      "-I",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-L",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
+      "-g",
+      "-Xcc",
+      "-isysroot",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
+      "-Xcc",
+      "-F",
+      "-Xcc",
+      "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks",
+      "-Xcc",
+      "-fPIC",
+      "-Xcc",
+      "-g",
+      "-package-name",
+      "diagnostickit",
+      "-driver-use-frontend-path",
+      "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+    ]
+  },
+  "targetDependencyMap" : {
+    "DiagnosticKit" : [
+
+    ]
+  },
+  "testDiscoveryCommands" : {
+
+  },
+  "testEntryPointCommands" : {
+
+  },
+  "traitConfiguration" : {
+    "default" : {
+
+    }
+  },
+  "writeCommands" : {
+    "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/sources" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<sources-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/Sources/Config/AppConfig.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/Sources/DiagnosticApp.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/Sources/Services/DiagnosticCollector.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/Sources/Services/GitHubUploader.swift"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/Sources/Views/MainView.swift"
+        }
+      ],
+      "outputFilePath" : "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/sources"
+    },
+    "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.product/Objects.LinkFileList" : {
+      "alwaysOutOfDate" : false,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<link-file-list>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/AppConfig.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/DiagnosticApp.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/DiagnosticCollector.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/GitHubUploader.swift.o"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/MainView.swift.o"
+        }
+      ],
+      "outputFilePath" : "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.product/Objects.LinkFileList"
+    },
+    "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/swift-version--58304C5D6DBC2206.txt" : {
+      "alwaysOutOfDate" : true,
+      "inputs" : [
+        {
+          "kind" : "virtual",
+          "name" : "<swift-get-version>"
+        },
+        {
+          "kind" : "file",
+          "name" : "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"
+        }
+      ],
+      "outputFilePath" : "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/swift-version--58304C5D6DBC2206.txt"
+    }
+  }
+}

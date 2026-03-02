@@ -1,0 +1,66 @@
+client:
+  name: basic
+  file-system: device-agnostic
+tools: {}
+targets:
+  "DiagnosticKit-arm64-apple-macosx26.0-release.exe": ["<DiagnosticKit-arm64-apple-macosx26.0-release.exe>"]
+  "DiagnosticKit-arm64-apple-macosx26.0-release.module": ["<DiagnosticKit-arm64-apple-macosx26.0-release.module>"]
+  "PackageStructure": ["<PackageStructure>"]
+  "main": ["<DiagnosticKit-arm64-apple-macosx26.0-release.exe>","<DiagnosticKit-arm64-apple-macosx26.0-release.module>"]
+  "test": ["<DiagnosticKit-arm64-apple-macosx26.0-release.exe>","<DiagnosticKit-arm64-apple-macosx26.0-release.module>"]
+default: "main"
+nodes:
+  "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/Sources/":
+    is-directory-structure: true
+    content-exclusion-patterns: [".git",".build"]
+commands:
+  "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/sources":
+    tool: write-auxiliary-file
+    inputs: ["<sources-file-list>","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/Sources/Config/AppConfig.swift","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/Sources/DiagnosticApp.swift","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/Sources/Services/DiagnosticCollector.swift","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/Sources/Services/GitHubUploader.swift","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/Sources/Views/MainView.swift"]
+    outputs: ["/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/sources"]
+    description: "Write auxiliary file /Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/sources"
+
+  "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.product/Objects.LinkFileList":
+    tool: write-auxiliary-file
+    inputs: ["<link-file-list>","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/AppConfig.swift.o","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/DiagnosticApp.swift.o","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/DiagnosticCollector.swift.o","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/GitHubUploader.swift.o","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/MainView.swift.o"]
+    outputs: ["/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.product/Objects.LinkFileList"]
+    description: "Write auxiliary file /Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.product/Objects.LinkFileList"
+
+  "/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/swift-version--58304C5D6DBC2206.txt":
+    tool: write-auxiliary-file
+    inputs: ["<swift-get-version>","/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc"]
+    outputs: ["/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/swift-version--58304C5D6DBC2206.txt"]
+    always-out-of-date: "true"
+    description: "Write auxiliary file /Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/swift-version--58304C5D6DBC2206.txt"
+
+  "<DiagnosticKit-arm64-apple-macosx26.0-release.exe>":
+    tool: phony
+    inputs: ["/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit"]
+    outputs: ["<DiagnosticKit-arm64-apple-macosx26.0-release.exe>"]
+
+  "<DiagnosticKit-arm64-apple-macosx26.0-release.module>":
+    tool: phony
+    inputs: ["/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/AppConfig.swift.o","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/DiagnosticApp.swift.o","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/DiagnosticCollector.swift.o","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/GitHubUploader.swift.o","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/MainView.swift.o","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/Modules/DiagnosticKit.swiftmodule"]
+    outputs: ["<DiagnosticKit-arm64-apple-macosx26.0-release.module>"]
+
+  "C.DiagnosticKit-arm64-apple-macosx26.0-release.exe":
+    tool: shell
+    inputs: ["/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/AppConfig.swift.o","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/DiagnosticApp.swift.o","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/DiagnosticCollector.swift.o","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/GitHubUploader.swift.o","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/MainView.swift.o","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.product/Objects.LinkFileList"]
+    outputs: ["/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit"]
+    description: "Linking ./.build/arm64-apple-macosx/release/DiagnosticKit"
+    args: ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc","-L","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release","-o","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit","-module-name","DiagnosticKit","-Xlinker","-no_warn_duplicate_libraries","-emit-executable","-Xlinker","-dead_strip","-Xlinker","-alias","-Xlinker","_DiagnosticKit_main","-Xlinker","_main","-Xlinker","-rpath","-Xlinker","@loader_path","@/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.product/Objects.LinkFileList","-Xlinker","-rpath","-Xlinker","/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift-6.2/macosx","-target","arm64-apple-macosx13.0","-plugin-path","/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing","-sdk","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk","-F","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks","-F","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks","-I","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib","-L","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib","-g"]
+
+  "C.DiagnosticKit-arm64-apple-macosx26.0-release.module":
+    tool: shell
+    inputs: ["/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/Sources/Config/AppConfig.swift","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/Sources/DiagnosticApp.swift","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/Sources/Services/DiagnosticCollector.swift","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/Sources/Services/GitHubUploader.swift","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/Sources/Views/MainView.swift","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/swift-version--58304C5D6DBC2206.txt","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/sources"]
+    outputs: ["/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/AppConfig.swift.o","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/DiagnosticApp.swift.o","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/DiagnosticCollector.swift.o","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/GitHubUploader.swift.o","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/MainView.swift.o","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/Modules/DiagnosticKit.swiftmodule"]
+    description: "Compiling Swift Module 'DiagnosticKit' (5 sources)"
+    args: ["/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/swiftc","-module-name","DiagnosticKit","-emit-dependencies","-emit-module","-emit-module-path","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/Modules/DiagnosticKit.swiftmodule","-output-file-map","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/output-file-map.json","-whole-module-optimization","-num-threads","10","-c","@/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/DiagnosticKit.build/sources","-I","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/Modules","-target","arm64-apple-macosx13.0","-whole-module-optimization","-num-threads","10","-serialize-diagnostics","-O","-j10","-DSWIFT_PACKAGE","-DSWIFT_MODULE_RESOURCE_BUNDLE_UNAVAILABLE","-module-cache-path","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/.build/arm64-apple-macosx/release/ModuleCache","-parseable-output","-Xfrontend","-entry-point-function-name","-Xfrontend","DiagnosticKit_main","-swift-version","5","-plugin-path","/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/swift/host/plugins/testing","-sdk","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk","-F","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks","-F","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks","-I","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib","-L","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib","-g","-Xcc","-isysroot","-Xcc","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.2.sdk","-Xcc","-F","-Xcc","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks","-Xcc","-F","-Xcc","/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/PrivateFrameworks","-Xcc","-fPIC","-Xcc","-g","-package-name","diagnostickit"]
+
+  "PackageStructure":
+    tool: package-structure-tool
+    inputs: ["/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/Sources/","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/Package.swift","/Users/danielraffel/Code/JUCE-Plugin-Starter/Tools/DiagnosticKit/Package.resolved"]
+    outputs: ["<PackageStructure>"]
+    description: "Planning build"
+    allow-missing-inputs: true
+
