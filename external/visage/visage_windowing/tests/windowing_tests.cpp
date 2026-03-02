@@ -109,4 +109,38 @@ TEST_CASE("createPluginWindow returns valid window on iOS", "[windowing][ios]") 
   auto window = createPluginWindow(200_px, 300_px, nullptr);
   REQUIRE(window != nullptr);
 }
+
+TEST_CASE("iOS window show/hide cycle", "[windowing][ios]") {
+  using namespace visage::dimension;
+  auto window = createWindow(100_px, 100_px);
+  REQUIRE(window != nullptr);
+
+  window->show();
+  REQUIRE(window->isShowing() == true);
+
+  window->hide();
+  REQUIRE(window->isShowing() == false);
+}
+
+TEST_CASE("iOS window close stops showing", "[windowing][ios]") {
+  using namespace visage::dimension;
+  auto window = createWindow(100_px, 100_px);
+  REQUIRE(window != nullptr);
+
+  window->show();
+  REQUIRE(window->isShowing() == true);
+
+  window->close();
+  REQUIRE(window->isShowing() == false);
+}
+
+TEST_CASE("iOS window DPI scale from constructor", "[windowing][ios]") {
+  float scale = defaultDpiScale();
+  using namespace visage::dimension;
+  auto window = createWindow(200_px, 300_px);
+  REQUIRE(window != nullptr);
+
+  // Default scale should match device scale
+  REQUIRE(window->dpiScale() == Catch::Approx(scale));
+}
 #endif
