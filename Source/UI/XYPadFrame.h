@@ -2,7 +2,10 @@
 
 #include <visage_ui/frame.h>
 #include <visage_graphics/canvas.h>
+#include <visage_graphics/font.h>
 #include <functional>
+
+namespace visage::fonts { extern ::visage::EmbeddedFile Lato_Regular_ttf; }
 
 class XYPadFrame : public visage::Frame {
 public:
@@ -63,28 +66,52 @@ public:
         float thumbX = ax + xValue_ * aw;
         float thumbY = ay + (1.0f - yValue_) * ah;
 
-        // Crosshair lines
-        canvas.setColor(0x40ffffff);
+        // Crosshair lines (brighter when dragging)
+        canvas.setColor(dragging_ ? 0x60ff8833 : 0x30ffffff);
         canvas.segment(thumbX, ay, thumbX, ay + ah, 0.5f, false);
         canvas.segment(ax, thumbY, ax + aw, thumbY, 0.5f, false);
 
-        // Thumb shadow
         float thumbR = 10.0f;
+
+        // Outer glow when dragging (GPU-rendered radial effect)
+        if (dragging_) {
+            canvas.setColor(0x20ff8833);
+            canvas.circle(thumbX - thumbR * 2.5f, thumbY - thumbR * 2.5f, thumbR * 5);
+            canvas.setColor(0x30ff8833);
+            canvas.circle(thumbX - thumbR * 1.5f, thumbY - thumbR * 1.5f, thumbR * 3);
+        }
+
+        // Thumb shadow
         canvas.setColor(0x80000000);
         canvas.circle(thumbX - thumbR + 1, thumbY - thumbR + 2, thumbR * 2);
 
-        // Thumb (orange)
-        canvas.setColor(0xffff8833);
+        // Thumb (orange, brighter when dragging)
+        canvas.setColor(dragging_ ? 0xffffaa44 : 0xffff8833);
         canvas.circle(thumbX - thumbR, thumbY - thumbR, thumbR * 2);
 
-        // Thumb highlight ring
+        // Inner glow
+        canvas.setColor(0x40ffaa00);
+        canvas.circle(thumbX - thumbR + 2, thumbY - thumbR + 2, thumbR * 2 - 4);
+
+        // Thumb highlight
         canvas.setColor(0x60ffffff);
         canvas.circle(thumbX - thumbR * 0.5f, thumbY - thumbR * 0.6f, thumbR * 0.6f);
 
+        // Axis labels
+        visage::Font font(9.0f, visage::fonts::Lato_Regular_ttf);
+        canvas.setColor(0x60ffffff);
+        canvas.text("X", font, visage::Font::kCenter, w - pad + 2, h / 2 - 6, pad - 2, 12);
+        canvas.text("Y", font, visage::Font::kCenter, w / 2 - 6, 1, 12, pad - 2);
     }
 
     void mouseDown(const visage::MouseEvent& e) override {
+        dragging_ = true;
         updateFromMouse(e);
+    }
+
+    void mouseUp(const visage::MouseEvent&) override {
+        dragging_ = false;
+        redraw();
     }
 
     void mouseDrag(const visage::MouseEvent& e) override {
@@ -113,4 +140,5 @@ private:
 
     float xValue_ = 0.5f;
     float yValue_ = 0.5f;
+    bool dragging_ = false;
 };

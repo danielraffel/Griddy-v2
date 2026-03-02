@@ -35,6 +35,7 @@ private:
     std::unique_ptr<visage::ApplicationWindow> visageWindow_;
     visage::Frame* rootFrame_ = nullptr;
     visage::Frame* mouseDownFrame_ = nullptr;
+    visage::Frame* hoverFrame_ = nullptr;
     visage::Frame* focusedChild_ = nullptr;
     visage::FrameEventHandler eventHandler_;
     bool windowCreated_ = false;

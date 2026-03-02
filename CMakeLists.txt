@@ -114,6 +114,14 @@ target_sources(${PROJECT_NAME} PRIVATE
     Source/Settings/SettingsManager.h
     Source/UI/XYPadFrame.h
     Source/UI/LEDMatrixFrame.h
+    Source/UI/DensitySliderFrame.h
+    Source/UI/RotaryKnobFrame.h
+    Source/UI/ResetButtonFrame.h
+    Source/UI/SettingsButtonFrame.h
+    Source/UI/SettingsPanelFrame.h
+    Source/Modulation/LFO.h
+    Source/Modulation/ModulationMatrix.h
+    Source/PatternChain/PatternChain.h
 )
 
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
@@ -134,6 +142,10 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC
     JUCE_USE_CURL=0
     JUCE_WEB_BROWSER=0
     JUCE_DISPLAY_SPLASH_SCREEN=0
+    ENABLE_VELOCITY_SYSTEM=1
+    ENABLE_EUCLIDEAN_MODE=1
+    ENABLE_PATTERN_CHAIN=1
+    ENABLE_MODULATION_MATRIX=1
 )
 
 target_link_libraries(${PROJECT_NAME} PRIVATE

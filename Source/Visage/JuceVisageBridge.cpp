@@ -117,6 +117,11 @@ void JuceVisageBridge::timerCallback() {
     if (!windowCreated_ && isShowing() && getPeer() && getWidth() > 0) {
         createEmbeddedWindow();
     }
+
+    // Continuously trigger Visage re-rendering so dirty frames get flushed to Metal
+    if (windowCreated_ && visageWindow_) {
+        visageWindow_->drawWindow();
+    }
 }
 
 // --- Mouse Events ---
@@ -142,27 +147,95 @@ visage::MouseEvent JuceVisageBridge::convertMouseEvent(const juce::MouseEvent& e
 void JuceVisageBridge::mouseDown(const juce::MouseEvent& e) {
     if (!rootFrame_) return;
     auto ve = convertMouseEvent(e);
-    mouseDownFrame_ = rootFrame_;
-    rootFrame_->mouseDown(ve);
+
+    // Find the deepest child frame under the mouse cursor
+    visage::Frame* target = rootFrame_->frameAtPoint({ ve.position.x, ve.position.y });
+    if (!target) target = rootFrame_;
+
+    mouseDownFrame_ = target;
+
+    // Convert position to target's local coordinates
+    visage::MouseEvent localEvent = ve;
+    visage::Frame* f = target;
+    while (f && f != rootFrame_) {
+        localEvent.position.x -= f->x();
+        localEvent.position.y -= f->y();
+        f = f->parent();
+    }
+
+    target->mouseDown(localEvent);
 }
 
 void JuceVisageBridge::mouseUp(const juce::MouseEvent& e) {
     if (!mouseDownFrame_) return;
     auto ve = convertMouseEvent(e);
-    mouseDownFrame_->mouseUp(ve);
+
+    // Convert to target's local coordinates
+    visage::MouseEvent localEvent = ve;
+    visage::Frame* f = mouseDownFrame_;
+    while (f && f != rootFrame_) {
+        localEvent.position.x -= f->x();
+        localEvent.position.y -= f->y();
+        f = f->parent();
+    }
+
+    mouseDownFrame_->mouseUp(localEvent);
     mouseDownFrame_ = nullptr;
 }
 
 void JuceVisageBridge::mouseDrag(const juce::MouseEvent& e) {
     if (!mouseDownFrame_) return;
     auto ve = convertMouseEvent(e);
-    mouseDownFrame_->mouseDrag(ve);
+
+    // Convert to target's local coordinates
+    visage::MouseEvent localEvent = ve;
+    visage::Frame* f = mouseDownFrame_;
+    while (f && f != rootFrame_) {
+        localEvent.position.x -= f->x();
+        localEvent.position.y -= f->y();
+        f = f->parent();
+    }
+
+    mouseDownFrame_->mouseDrag(localEvent);
 }
 
 void JuceVisageBridge::mouseMove(const juce::MouseEvent& e) {
     if (!rootFrame_) return;
     auto ve = convertMouseEvent(e);
-    rootFrame_->mouseMove(ve);
+
+    // Find the frame under cursor for enter/exit tracking
+    visage::Frame* target = rootFrame_->frameAtPoint({ ve.position.x, ve.position.y });
+
+    // Handle mouseEnter/mouseExit
+    if (target != hoverFrame_) {
+        if (hoverFrame_) {
+            visage::MouseEvent exitEvent = ve;
+            hoverFrame_->mouseExit(exitEvent);
+        }
+        hoverFrame_ = target;
+        if (hoverFrame_ && hoverFrame_ != rootFrame_) {
+            visage::MouseEvent enterEvent = ve;
+            visage::Frame* f = hoverFrame_;
+            while (f && f != rootFrame_) {
+                enterEvent.position.x -= f->x();
+                enterEvent.position.y -= f->y();
+                f = f->parent();
+            }
+            hoverFrame_->mouseEnter(enterEvent);
+        }
+    }
+
+    // Dispatch mouseMove to the frame under cursor
+    if (target && target != rootFrame_) {
+        visage::MouseEvent localEvent = ve;
+        visage::Frame* f = target;
+        while (f && f != rootFrame_) {
+            localEvent.position.x -= f->x();
+            localEvent.position.y -= f->y();
+            f = f->parent();
+        }
+        target->mouseMove(localEvent);
+    }
 }
 
 void JuceVisageBridge::mouseWheelMove(const juce::MouseEvent& e,

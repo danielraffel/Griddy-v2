@@ -4,6 +4,11 @@
 #include "Visage/JuceVisageBridge.h"
 #include "UI/XYPadFrame.h"
 #include "UI/LEDMatrixFrame.h"
+#include "UI/DensitySliderFrame.h"
+#include "UI/RotaryKnobFrame.h"
+#include "UI/ResetButtonFrame.h"
+#include "UI/SettingsButtonFrame.h"
+#include "UI/SettingsPanelFrame.h"
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <visage_ui/frame.h>
 
@@ -29,6 +34,17 @@ private:
     // UI components (owned by rootFrame_ via addChild, but we keep pointers)
     XYPadFrame* xyPad_ = nullptr;
     LEDMatrixFrame* ledMatrix_ = nullptr;
+    DensitySliderFrame* bdDensity_ = nullptr;
+    DensitySliderFrame* sdDensity_ = nullptr;
+    DensitySliderFrame* hhDensity_ = nullptr;
+    RotaryKnobFrame* chaosKnob_ = nullptr;
+    RotaryKnobFrame* swingKnob_ = nullptr;
+    ResetButtonFrame* resetButton_ = nullptr;
+    SettingsButtonFrame* settingsButton_ = nullptr;
+    SettingsPanelFrame* settingsPanel_ = nullptr;
+    RotaryKnobFrame* bdVelKnob_ = nullptr;
+    RotaryKnobFrame* sdVelKnob_ = nullptr;
+    RotaryKnobFrame* hhVelKnob_ = nullptr;
 
     bool uiCreated_ = false;
 
