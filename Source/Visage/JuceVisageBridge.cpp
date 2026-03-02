@@ -16,6 +16,8 @@ JuceVisageBridge::JuceVisageBridge() {
     eventHandler_.set_clipboard_text = [](const std::string& text) {
         juce::SystemClipboard::copyTextToClipboard(juce::String(text));
     };
+#if !JUCE_IOS
+    // Cursor style mapping — no cursors on iOS
     eventHandler_.set_cursor_style = [this](visage::MouseCursor cursor) {
         switch (cursor) {
             case visage::MouseCursor::Arrow:
@@ -36,6 +38,7 @@ JuceVisageBridge::JuceVisageBridge() {
                 setMouseCursor(juce::MouseCursor::NormalCursor); break;
         }
     };
+#endif
     eventHandler_.request_redraw = [this](visage::Frame*) {
         repaint();
     };
@@ -107,7 +110,6 @@ void JuceVisageBridge::resized() {
         if (bounds.isEmpty()) return;
         float w = static_cast<float>(bounds.getWidth());
         float h = static_cast<float>(bounds.getHeight());
-        // macOS: pass logical pixels; Visage handles DPI scaling internally
         visageWindow_->setWindowDimensions(w, h);
         rootFrame_->setBounds(0, 0, w, h);
     }
@@ -124,7 +126,14 @@ void JuceVisageBridge::timerCallback() {
     }
 }
 
-// --- Mouse Events ---
+// =============================================================================
+// Mouse Events — macOS only
+// On iOS, VisageMetalView handles touch events natively via UIKit.
+// The Metal view sits atop the JUCE UIView, so UIKit routes touches
+// to it first. No bridge forwarding needed (would cause double events).
+// =============================================================================
+
+#if !JUCE_IOS
 
 visage::MouseEvent JuceVisageBridge::convertMouseEvent(const juce::MouseEvent& e) const {
     visage::MouseEvent ve;
@@ -250,6 +259,8 @@ void JuceVisageBridge::mouseWheelMove(const juce::MouseEvent& e,
     rootFrame_->mouseWheel(ve);
 }
 
+#endif // !JUCE_IOS
+
 // --- Key Events ---
 
 visage::KeyEvent JuceVisageBridge::convertKeyEvent(const juce::KeyPress& key) const {
@@ -284,7 +295,7 @@ int JuceVisageBridge::convertModifiers(const juce::ModifierKeys& mods) const {
     int result = 0;
     if (mods.isShiftDown())   result |= visage::kModifierShift;
     if (mods.isAltDown())     result |= visage::kModifierAlt;
-#if JUCE_MAC
+#if JUCE_MAC || JUCE_IOS
     if (mods.isCommandDown()) result |= visage::kModifierCmd;
     if (mods.isCtrlDown())    result |= visage::kModifierMacCtrl;
 #else
