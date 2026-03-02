@@ -21,7 +21,7 @@ if(NOT JUCE_REPO)
     set(JUCE_REPO "https://github.com/juce-framework/JUCE.git")
 endif()
 if(NOT JUCE_TAG)
-    set(JUCE_TAG "8.0.8")
+    set(JUCE_TAG "8.0.12")
 endif()
 if(NOT COMPANY_NAME)
     set(COMPANY_NAME "Generous Corp")
@@ -111,6 +111,8 @@ target_sources(${PROJECT_NAME} PRIVATE
     Source/PluginEditor.h
     Source/Visage/JuceVisageBridge.cpp
     Source/Visage/JuceVisageBridge.h
+    Source/Visage/SettingsMenuHelper.h
+    Source/Visage/SettingsMenuHelper.mm
     Source/Grids/GridsEngine.cpp
     Source/Grids/GridsEngine.h
     Source/Grids/GridsPatternData.h
@@ -149,7 +151,6 @@ target_compile_definitions(${PROJECT_NAME} PUBLIC
     JUCE_VST3_CAN_REPLACE_VST2=0
     JUCE_USE_CURL=0
     JUCE_WEB_BROWSER=0
-    JUCE_DISPLAY_SPLASH_SCREEN=0
     ENABLE_VELOCITY_SYSTEM=1
     ENABLE_EUCLIDEAN_MODE=1
     ENABLE_PATTERN_CHAIN=1
@@ -245,6 +246,8 @@ if(IOS OR CMAKE_SYSTEM_NAME STREQUAL "iOS")
         App/GriddyAppMainComponent.h
         App/GriddyAppEngine.cpp
         App/GriddyAppEngine.h
+        App/KeyboardDoneHelper.h
+        App/KeyboardDoneHelper.mm
         App/GriddyMidiOut.cpp
         App/GriddyMidiOut.h
         App/GriddySampleLibrary.cpp
@@ -283,7 +286,6 @@ if(IOS OR CMAKE_SYSTEM_NAME STREQUAL "iOS")
     target_compile_definitions(GriddyApp PRIVATE
         JUCE_USE_CURL=0
         JUCE_WEB_BROWSER=0
-        JUCE_DISPLAY_SPLASH_SCREEN=0
     )
 
     juce_add_binary_data(GriddyApp_Resources SOURCES ${GRIDDY_APP_SAMPLES})
@@ -316,12 +318,14 @@ if(IOS OR CMAKE_SYSTEM_NAME STREQUAL "iOS")
         XCODE_ATTRIBUTE_COPY_PHASE_STRIP "NO"
     )
 
-    # Optional: set a development team for device builds via -DDEVELOPMENT_TEAM=XXXX
-    if(DEFINED DEVELOPMENT_TEAM AND NOT DEVELOPMENT_TEAM STREQUAL "")
-        set_target_properties(GriddyApp PROPERTIES
-            XCODE_ATTRIBUTE_DEVELOPMENT_TEAM "${DEVELOPMENT_TEAM}"
-        )
+    # Default to danielraffel's team; override via -DDEVELOPMENT_TEAM=XXXX
+    if(NOT DEFINED DEVELOPMENT_TEAM OR DEVELOPMENT_TEAM STREQUAL "")
+        set(DEVELOPMENT_TEAM "95CX6P84C4")
     endif()
+    set_target_properties(GriddyApp PROPERTIES
+        XCODE_ATTRIBUTE_DEVELOPMENT_TEAM "${DEVELOPMENT_TEAM}"
+        XCODE_ATTRIBUTE_CODE_SIGN_STYLE "Automatic"
+    )
 endif()
 
 # Set global C++ standard for all targets
