@@ -61,6 +61,18 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(JUCE)
 
+# ==============================================================================
+# Visage GPU UI Framework (shared by macOS plugin and iOS app)
+# ==============================================================================
+set(VISAGE_BUILD_EXAMPLES OFF CACHE BOOL "Build Visage examples" FORCE)
+set(VISAGE_BUILD_TESTS OFF CACHE BOOL "Build Visage tests" FORCE)
+add_subdirectory(external/visage)
+
+# ==============================================================================
+# macOS Plugin Target (skip when cross-compiling for iOS)
+# ==============================================================================
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
+
 # Get AU version from environment or calculate it
 set(AU_VERSION_INT $ENV{AU_VERSION_INT})
 if(NOT AU_VERSION_INT)
@@ -89,13 +101,6 @@ juce_add_plugin(${PROJECT_NAME}
     AU_SANDBOX_SAFE TRUE
     VST3_CATEGORIES "Drum|Tools"
 )
-
-# ==============================================================================
-# Visage GPU UI Framework
-# ==============================================================================
-set(VISAGE_BUILD_EXAMPLES OFF CACHE BOOL "Build Visage examples" FORCE)
-set(VISAGE_BUILD_TESTS OFF CACHE BOOL "Build Visage tests" FORCE)
-add_subdirectory(external/visage)
 
 juce_generate_juce_header(${PROJECT_NAME})
 
@@ -202,22 +207,130 @@ if(TARGET ${PROJECT_NAME}_VST3)
     )
 endif()
 
+endif() # NOT iOS
+
+# ==============================================================================
+# iOS GUI App Target
+# ==============================================================================
+# App sample files (bundled as binary data for iOS app)
+set(GRIDDY_APP_SAMPLES
+    ${CMAKE_SOURCE_DIR}/Resources/Samples/kick.wav
+    ${CMAKE_SOURCE_DIR}/Resources/Samples/snare.wav
+    ${CMAKE_SOURCE_DIR}/Resources/Samples/hihat.wav
+    ${CMAKE_SOURCE_DIR}/Resources/Images/app_icon_1024.png
+)
+
+if(IOS OR CMAKE_SYSTEM_NAME STREQUAL "iOS")
+    juce_add_gui_app(GriddyApp
+        COMPANY_NAME ${COMPANY_NAME}
+        BUNDLE_ID ${PROJECT_BUNDLE_ID}.app
+        PRODUCT_NAME "Griddy"
+        VERSION ${PLUGIN_VERSION}
+        ICON_BIG Resources/Images/app_icon_1024.png
+        BACKGROUND_AUDIO_ENABLED TRUE
+        STATUS_BAR_HIDDEN TRUE
+        REQUIRES_FULL_SCREEN TRUE
+        IPHONE_SCREEN_ORIENTATIONS "UIInterfaceOrientationPortrait"
+        IPAD_SCREEN_ORIENTATIONS "UIInterfaceOrientationPortrait"
+    )
+
+    juce_generate_juce_header(GriddyApp)
+
+    target_sources(GriddyApp PRIVATE
+        App/GriddyApp.cpp
+        App/GriddyAppMainComponent.cpp
+        App/GriddyAppMainComponent.h
+        App/GriddyAppEngine.cpp
+        App/GriddyAppEngine.h
+        App/GriddyMidiOut.cpp
+        App/GriddyMidiOut.h
+        App/GriddySampleLibrary.cpp
+        App/GriddySampleLibrary.h
+        App/XYPad.cpp
+        App/XYPad.h
+        Source/Settings/SettingsManager.h
+        Source/Grids/GridsEngine.cpp
+        Source/Grids/GridsEngine.h
+        Source/Grids/GridsPatternData.h
+    )
+
+    target_include_directories(GriddyApp PRIVATE
+        ${CMAKE_SOURCE_DIR}/Source
+        ${CMAKE_SOURCE_DIR}/Source/Grids
+        ${CMAKE_SOURCE_DIR}/App
+        ${CMAKE_SOURCE_DIR}/external/visage
+        ${CMAKE_SOURCE_DIR}/external/visage/visage_ui
+        ${CMAKE_SOURCE_DIR}/external/visage/visage_graphics
+        ${CMAKE_SOURCE_DIR}/external/visage/visage_windowing
+        ${CMAKE_SOURCE_DIR}/external/visage/visage_app
+        ${CMAKE_SOURCE_DIR}/external/visage/visage_widgets
+        ${CMAKE_SOURCE_DIR}/external/visage/visage_utils
+    )
+
+    target_compile_features(GriddyApp PRIVATE cxx_std_17)
+
+    target_compile_definitions(GriddyApp PRIVATE
+        JUCE_USE_CURL=0
+        JUCE_WEB_BROWSER=0
+        JUCE_DISPLAY_SPLASH_SCREEN=0
+    )
+
+    juce_add_binary_data(GriddyApp_Resources SOURCES ${GRIDDY_APP_SAMPLES})
+
+    target_link_libraries(GriddyApp PRIVATE
+        juce::juce_audio_basics
+        juce::juce_audio_devices
+        juce::juce_audio_formats
+        juce::juce_audio_processors
+        juce::juce_audio_utils
+        juce::juce_core
+        juce::juce_data_structures
+        juce::juce_dsp
+        juce::juce_events
+        juce::juce_graphics
+        juce::juce_gui_basics
+        juce::juce_gui_extra
+        GriddyApp_Resources
+        visage
+    )
+
+    # Allow simulator builds without signing
+    set_target_properties(GriddyApp PROPERTIES
+        XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED[sdk=iphonesimulator*] "NO"
+        XCODE_ATTRIBUTE_CODE_SIGNING_REQUIRED[sdk=iphonesimulator*] "NO"
+        XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY[sdk=iphonesimulator*] ""
+        XCODE_ATTRIBUTE_DEBUG_INFORMATION_FORMAT "dwarf-with-dsym"
+        XCODE_ATTRIBUTE_GCC_GENERATE_DEBUGGING_SYMBOLS "YES"
+        XCODE_ATTRIBUTE_STRIP_INSTALLED_PRODUCT "NO"
+        XCODE_ATTRIBUTE_COPY_PHASE_STRIP "NO"
+    )
+
+    # Optional: set a development team for device builds via -DDEVELOPMENT_TEAM=XXXX
+    if(DEFINED DEVELOPMENT_TEAM AND NOT DEVELOPMENT_TEAM STREQUAL "")
+        set_target_properties(GriddyApp PROPERTIES
+            XCODE_ATTRIBUTE_DEVELOPMENT_TEAM "${DEVELOPMENT_TEAM}"
+        )
+    endif()
+endif()
+
 # Set global C++ standard for all targets
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Fix code signing and C++ standard for VST3 helper tool (must be after JUCE targets are created)
-if(TARGET juce_vst3_helper)
-    set_target_properties(juce_vst3_helper PROPERTIES
-        XCODE_ATTRIBUTE_CODE_SIGNING_REQUIRED "NO"
-        XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "-"
-        XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED "NO"
-        CXX_STANDARD 17
-        CXX_STANDARD_REQUIRED YES
-        XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++17"
-        XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++"
-    )
-    target_compile_features(juce_vst3_helper PRIVATE cxx_std_17)
-    # Explicitly set compile options
-    target_compile_options(juce_vst3_helper PRIVATE -std=c++17)
+# Fix code signing and C++ standard for VST3 helper tool (macOS only)
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
+    if(TARGET juce_vst3_helper)
+        set_target_properties(juce_vst3_helper PROPERTIES
+            XCODE_ATTRIBUTE_CODE_SIGNING_REQUIRED "NO"
+            XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "-"
+            XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED "NO"
+            CXX_STANDARD 17
+            CXX_STANDARD_REQUIRED YES
+            XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++17"
+            XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++"
+        )
+        target_compile_features(juce_vst3_helper PRIVATE cxx_std_17)
+        # Explicitly set compile options
+        target_compile_options(juce_vst3_helper PRIVATE -std=c++17)
+    endif()
 endif()
