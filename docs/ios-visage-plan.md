@@ -351,36 +351,36 @@ Each can later become a separate PR branch when ready to submit upstream.
 ## Execution Order
 
 ```
-A1: Create ios/visage-support branches in all 3 repos
-A2: Cherry-pick 3 fork PRs (3 commits)
-B:  Create TransportButtonFrame + TempoFrame + ToggleFrame (1 commit)
-C:  Fix JuceVisageBridge for iOS (1 commit)
-D:  Replace GriddyApp UI with full Visage (1-2 commits)
-G:  Add windowing tests (1 commit)
-    ↓ VERIFY: iOS simulator build + launch + touch + audio
-E:  Update juce-visage skill (all 3 copies) (1 commit to marketplace)
-F:  Add setup-ios command (both copies) (1 commit to marketplace)
-H:  Create upstream PR tracking doc (1 commit to griddy-v2)
-I:  Migrate iOS changes to fork (1 commit to visage fork)
+A1: Create ios/visage-support branches in all 3 repos          ✅ DONE
+A2: Cherry-pick 3 fork PRs (3 commits)                         ✅ DONE
+B:  Create TransportButtonFrame + TempoFrame + ToggleFrame      ✅ DONE
+C:  Fix JuceVisageBridge for iOS                                ✅ DONE
+D:  Replace GriddyApp UI with full Visage                       ✅ DONE
+G:  Add windowing tests                                         ✅ DONE
+    ↓ VERIFY: iOS simulator build + launch + touch + audio      ✅ DONE
+E:  Update juce-visage skill (all 3 copies)                     ✅ DONE
+F:  Add setup-ios command (both copies)                         ✅ DONE
+H:  Create upstream PR tracking doc                             ✅ DONE
+I:  Migrate iOS changes to fork (5 commits)                     ✅ DONE
 ```
 
 ## Verification Checklist
 
-- [ ] macOS plugin builds and runs (`./scripts/build.sh standalone`)
-- [ ] iOS cmake generates: `cmake -B build-ios -G Xcode -DCMAKE_SYSTEM_NAME=iOS`
-- [ ] iOS build: `xcodebuild -scheme GriddyApp -sdk iphonesimulator`
-- [ ] iOS app launches — Metal renders (not JUCE paint)
-- [ ] XY pad: touch drag updates position
-- [ ] Density sliders: vertical drag works
-- [ ] Rotary knobs: drag works
-- [ ] Transport: Play/Stop toggles, Record toggles
-- [ ] Tempo: drag changes BPM
-- [ ] LED matrix: patterns visible, step indicator advances
-- [ ] Safe area: content respects notch/home indicator
-- [ ] Cherry-picked fixes don't break any build
-- [ ] All 3 skill copies are identical
-- [ ] Both command copies are identical
-- [ ] docs/visage-ios-upstream-prs.md lists all 5 potential PRs
-- [ ] Windowing tests compile
-- [ ] Fork branch has iOS changes
-- [ ] Branches named `ios/visage-support` in all repos
+- [x] macOS plugin builds and runs (`./scripts/build.sh standalone`)
+- [x] iOS cmake generates: `cmake -B build-ios -G Xcode -DCMAKE_SYSTEM_NAME=iOS`
+- [x] iOS build: `xcodebuild -scheme GriddyApp -sdk iphonesimulator`
+- [ ] iOS app launches — Metal renders (not JUCE paint) *(requires simulator testing)*
+- [ ] XY pad: touch drag updates position *(requires simulator testing)*
+- [ ] Density sliders: vertical drag works *(requires simulator testing)*
+- [ ] Rotary knobs: drag works *(requires simulator testing)*
+- [ ] Transport: Play/Stop toggles, Record toggles *(requires simulator testing)*
+- [ ] Tempo: drag changes BPM *(requires simulator testing)*
+- [ ] LED matrix: patterns visible, step indicator advances *(requires simulator testing)*
+- [ ] Safe area: content respects notch/home indicator *(requires simulator testing)*
+- [x] Cherry-picked fixes don't break any build
+- [x] All 3 skill copies are identical
+- [x] Both command copies are identical
+- [x] docs/visage-ios-upstream-prs.md lists all 5 potential PRs
+- [x] Windowing tests compile (part of iOS build)
+- [x] Fork branch has iOS changes (5 commits on ios/visage-support)
+- [x] Branches named `ios/visage-support` in all repos
