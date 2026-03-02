@@ -166,7 +166,7 @@ namespace visage {
   struct Primitive : Shape<VertexType> {
     static void* taggedPointer(void* pointer, int tag) {
       uintptr_t int_value = reinterpret_cast<uintptr_t>(pointer);
-      return reinterpret_cast<void*>(int_value | uintptr_t(tag) & 3);
+      return reinterpret_cast<void*>(int_value | (uintptr_t(tag) & 3));
     }
 
     Primitive(const void* batch_id, const ClampBounds& clamp, const PackedBrush* brush, float x,

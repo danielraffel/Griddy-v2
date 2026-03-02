@@ -295,8 +295,17 @@ namespace visage {
       [alert addAction:[UIAlertAction actionWithTitle:@"OK"
                                                 style:UIAlertActionStyleDefault
                                               handler:nil]];
-      UIViewController* root =
-          [UIApplication sharedApplication].keyWindow.rootViewController;
+      UIWindow* activeWindow = nil;
+      for (UIScene* scene in [UIApplication sharedApplication].connectedScenes) {
+        if ([scene isKindOfClass:[UIWindowScene class]]) {
+          UIWindowScene* windowScene = (UIWindowScene*)scene;
+          for (UIWindow* window in windowScene.windows) {
+            if (window.isKeyWindow) { activeWindow = window; break; }
+          }
+          if (activeWindow) break;
+        }
+      }
+      UIViewController* root = activeWindow.rootViewController;
       if (root)
         [root presentViewController:alert animated:YES completion:nil];
     });
