@@ -124,6 +124,9 @@ target_sources(${PROJECT_NAME} PRIVATE
     Source/UI/ResetButtonFrame.h
     Source/UI/SettingsButtonFrame.h
     Source/UI/SettingsPanelFrame.h
+    Source/UI/TransportButtonFrame.h
+    Source/UI/TempoFrame.h
+    Source/UI/ToggleFrame.h
     Source/Modulation/LFO.h
     Source/Modulation/ModulationMatrix.h
     Source/PatternChain/PatternChain.h
