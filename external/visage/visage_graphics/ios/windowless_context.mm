@@ -19,14 +19,12 @@
  * DEALINGS IN THE SOFTWARE.
  */
 
-#pragma once
+#import <Metal/Metal.h>
+#import <MetalKit/MetalKit.h>
 
 namespace visage {
-#if VISAGE_MAC || VISAGE_IOS
-  void* windowlessContext();
-#else
-  static void* windowlessContext() {
-    return nullptr;
+  void* windowlessContext() {
+    static id<MTLDevice> device = MTLCreateSystemDefaultDevice();
+    return (__bridge void*)device;
   }
-#endif
 }

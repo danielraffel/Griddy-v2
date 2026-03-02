@@ -21,12 +21,28 @@
 
 #pragma once
 
+#include "windowing.h"
+
 namespace visage {
-#if VISAGE_MAC || VISAGE_IOS
-  void* windowlessContext();
-#else
-  static void* windowlessContext() {
-    return nullptr;
-  }
-#endif
+  class WindowIos : public Window {
+  public:
+    WindowIos(int width, int height, float scale);
+    WindowIos(int width, int height, float scale, void* parent_handle);
+    ~WindowIos() override;
+
+    void runEventLoop() override;
+    void* nativeHandle() const override;
+    void* initWindow() const override;
+    void windowContentsResized(int width, int height) override;
+    void show() override;
+    void showMaximized() override;
+    void hide() override;
+    void close() override;
+    bool isShowing() const override;
+    void setWindowTitle(const std::string& title) override;
+    IPoint maxWindowDimensions() const override;
+
+  private:
+    void* metal_view_ = nullptr;
+  };
 }
