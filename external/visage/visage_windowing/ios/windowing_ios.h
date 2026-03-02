@@ -21,7 +21,27 @@
 
 #pragma once
 
+#if VISAGE_IOS
 #include "windowing.h"
+
+#import <UIKit/UIKit.h>
+#import <MetalKit/MetalKit.h>
+
+namespace visage {
+  class WindowIos;
+}
+
+@interface VisageMetalViewDelegate : NSObject <MTKViewDelegate>
+@property(nonatomic) visage::WindowIos* visage_window;
+@property long long start_microseconds;
+@end
+
+@interface VisageMetalView : MTKView
+@property(nonatomic) visage::WindowIos* visage_window;
+@property(nonatomic, strong) UITouch* active_touch;
+
+- (instancetype)initWithFrame:(CGRect)frame inWindow:(visage::WindowIos*)window;
+@end
 
 namespace visage {
   class WindowIos : public Window {
@@ -31,7 +51,7 @@ namespace visage {
     ~WindowIos() override;
 
     void runEventLoop() override;
-    void* nativeHandle() const override;
+    void* nativeHandle() const override { return (__bridge void*)view_; }
     void* initWindow() const override;
     void windowContentsResized(int width, int height) override;
     void show() override;
@@ -42,7 +62,13 @@ namespace visage {
     void setWindowTitle(const std::string& title) override;
     IPoint maxWindowDimensions() const override;
 
+    void handleNativeResize(int width, int height);
+
   private:
-    void* metal_view_ = nullptr;
+    UIView* parent_view_ = nullptr;
+    VisageMetalView* view_ = nil;
+    VisageMetalViewDelegate* view_delegate_ = nil;
   };
 }
+
+#endif
