@@ -29,6 +29,13 @@ public:
         redraw();
     }
 
+    void setVelocityRanges(float bd, float sd, float hh) {
+        bdVelocity_ = bd;
+        sdVelocity_ = sd;
+        hhVelocity_ = hh;
+        redraw();
+    }
+
     void setCurrentStep(int step) {
         if (currentStep_ != step) {
             currentStep_ = step;
@@ -58,8 +65,12 @@ public:
         // Layout constants
         float labelWidth = 25.0f;
         float startX = labelWidth + 10.0f;
-        float spacing = (w - startX - 10.0f) / 32.0f;
-        float ledSize = std::min(spacing * 0.7f, 10.0f); // Scale LEDs to fit spacing
+        float rightPad = 10.0f;
+        float groupGap = 8.0f; // Gap between groups of 8 for clear separation
+        float totalWidth = w - startX - rightPad;
+        float usableWidth = totalWidth - 3.0f * groupGap; // 3 gaps between 4 groups
+        float stepSpacing = usableWidth / 32.0f;
+        float ledSize = std::min(stepSpacing * 0.8f, 10.0f);
         float rowSpacing = h / 4.0f;
 
         // Density thresholds
@@ -78,17 +89,19 @@ public:
         // Group separators and bar numbers
         visage::Font barFont(8.0f, visage::fonts::Lato_Regular_ttf);
         for (int g = 0; g < 4; ++g) {
+            // Calculate group start X (accounting for gaps)
+            float groupStartX = startX + g * (8 * stepSpacing + groupGap);
+
             // Bar number at top of each group
-            float barX = startX + g * 8 * spacing;
             canvas.setColor(0xff555555);
             const char* barNums[] = { "1", "2", "3", "4" };
             canvas.text(barNums[g], barFont, visage::Font::kCenter,
-                        barX, 2, 8 * spacing, 10);
+                        groupStartX, 2, 8 * stepSpacing, 10);
 
-            // Separator line (between groups, not before first)
+            // Separator line in the gap (not through LEDs)
             if (g > 0) {
-                float sepX = barX - spacing * 0.5f; // Midpoint between groups
-                canvas.setColor(0x20ffffff);
+                float sepX = groupStartX - groupGap / 2.0f;
+                canvas.setColor(0x30ffffff);
                 canvas.segment(sepX, rowSpacing * 0.7f,
                                sepX, rowSpacing * 3 + ledSize,
                                0.5f, false);
@@ -97,7 +110,10 @@ public:
 
         // Draw LEDs
         for (int step = 0; step < 32; ++step) {
-            float lx = startX + step * spacing + (spacing - ledSize) / 2;
+            int group = step / 8;
+            int stepInGroup = step % 8;
+            float lx = startX + group * (8 * stepSpacing + groupGap)
+                      + stepInGroup * stepSpacing + (stepSpacing - ledSize) / 2;
 
             bool bdOn = bdPattern_[step] > bdThresh;
             bool sdOn = sdPattern_[step] > sdThresh;
@@ -113,30 +129,33 @@ public:
             float resetGlow = 0.0f;
             if (resetAnimProgress_ > 0.0f) {
                 if (resetIsRetrigger_) {
-                    // Sweep animation
                     float sweepPos = (1.0f - resetAnimProgress_) * 32.0f;
                     float dist = std::abs(static_cast<float>(step) - sweepPos);
                     if (dist < 4.0f)
                         resetGlow = (1.0f - dist / 4.0f) * resetAnimProgress_;
                 } else {
-                    // Flash animation
                     resetGlow = resetAnimProgress_ * 0.5f;
                 }
             }
 
+            // Velocity brightness (accurate: based on velocity range parameter)
+            float bdVelBright = velocityBrightness(bdAccent, bdVelocity_);
+            float sdVelBright = velocityBrightness(sdAccent, sdVelocity_);
+            float hhVelBright = velocityBrightness(hhAccent, hhVelocity_);
+
             // BD LED
             drawLED(canvas, lx, rowSpacing * 1 - ledSize / 2, ledSize,
-                    bdOn, bdAccent, isCurrent, resetGlow,
+                    bdOn, bdAccent, isCurrent, resetGlow, bdVelBright,
                     0xff331111, 0xffcc2222, 0xffff4444);
 
             // SD LED
             drawLED(canvas, lx, rowSpacing * 2 - ledSize / 2, ledSize,
-                    sdOn, sdAccent, isCurrent, resetGlow,
+                    sdOn, sdAccent, isCurrent, resetGlow, sdVelBright,
                     0xff113311, 0xff22cc22, 0xff44ff44);
 
             // HH LED
             drawLED(canvas, lx, rowSpacing * 3 - ledSize / 2, ledSize,
-                    hhOn, hhAccent, isCurrent, resetGlow,
+                    hhOn, hhAccent, isCurrent, resetGlow, hhVelBright,
                     0xff333311, 0xffcccc22, 0xffffff44);
         }
 
@@ -149,8 +168,30 @@ public:
     }
 
 private:
+    // Calculate brightness multiplier based on velocity range
+    // Returns 0.6..1.0 range — accents are always brighter than normals
+    float velocityBrightness(bool isAccent, float velocityRange) {
+        float minVel = 80.0f - (velocityRange * 40.0f);
+        float maxVel = 100.0f + (velocityRange * 27.0f);
+        float normalVel = (minVel + maxVel) / 2.0f;
+        float vel = isAccent ? maxVel : normalVel;
+        // Map velocity (40..127) to brightness (0.55..1.0)
+        return 0.55f + 0.45f * (vel / 127.0f);
+    }
+
+    unsigned int scaleColor(unsigned int color, float brightness) {
+        unsigned int r = static_cast<unsigned int>(((color >> 16) & 0xff) * brightness);
+        unsigned int g = static_cast<unsigned int>(((color >> 8) & 0xff) * brightness);
+        unsigned int b = static_cast<unsigned int>((color & 0xff) * brightness);
+        r = std::min(r, 255u);
+        g = std::min(g, 255u);
+        b = std::min(b, 255u);
+        return (0xff << 24) | (r << 16) | (g << 8) | b;
+    }
+
     void drawLED(visage::Canvas& canvas, float x, float y, float size,
                  bool on, bool accent, bool current, float resetGlow,
+                 float velBrightness,
                  unsigned int offColor, unsigned int onColor, unsigned int accentColor) {
         // Shadow for active LEDs
         if (on) {
@@ -158,18 +199,19 @@ private:
             canvas.circle(x + 1, y + 1, size);
         }
 
-        // Main LED
+        // Main LED — velocity brightness applied to active LEDs
         if (accent)
-            canvas.setColor(accentColor);
+            canvas.setColor(scaleColor(accentColor, velBrightness));
         else if (on)
-            canvas.setColor(onColor);
+            canvas.setColor(scaleColor(onColor, velBrightness));
         else
             canvas.setColor(offColor);
         canvas.circle(x, y, size);
 
         // Highlight for active LEDs
         if (on) {
-            canvas.setColor(0x40ffffff);
+            unsigned int hlAlpha = static_cast<unsigned int>(0x40 * velBrightness);
+            canvas.setColor((hlAlpha << 24) | 0x00ffffff);
             canvas.circle(x + 2, y + 1, size * 0.5f);
         }
 
@@ -182,7 +224,6 @@ private:
 
         // Current step indicator (glow + white ring)
         if (current) {
-            // Outer glow for current step (GPU-rendered)
             if (on) {
                 unsigned int glowColor = (accentColor & 0x00ffffff) | 0x30000000;
                 canvas.setColor(glowColor);
@@ -202,6 +243,9 @@ private:
     float bdDensity_ = 0.5f;
     float sdDensity_ = 0.5f;
     float hhDensity_ = 0.5f;
+    float bdVelocity_ = 0.5f;
+    float sdVelocity_ = 0.5f;
+    float hhVelocity_ = 0.5f;
     int currentStep_ = -1;
     float resetAnimProgress_ = 0.0f;
     bool resetIsRetrigger_ = false;

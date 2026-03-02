@@ -20,41 +20,42 @@ public:
     void draw(visage::Canvas& canvas) override {
         float w = width();
         float h = height();
-        float size = std::min(w, h);
-        float cx = w / 2.0f;
-        float cy = h / 2.0f;
+        float size = std::min(w, h) - 4.0f;
+        float x = (w - size) / 2.0f;
+        float y = (h - size) / 2.0f;
 
-        // Shadow
+        // Drop shadow
         canvas.setColor(0x40000000);
-        canvas.circle(cx - size / 2.0f + 1, cy - size / 2.0f + 2, size);
+        canvas.circle(x + 1, y + 2, size);
 
-        // Button body
-        unsigned int bodyColor = glowing_ ? 0xffff8833 : 0xff3a3a3a;
-        canvas.setColor(bodyColor);
-        canvas.circle(cx - size / 2.0f, cy - size / 2.0f, size);
+        // Button face — flat filled circle
+        if (pressed_) {
+            canvas.setColor(0xff555555);
+        } else if (glowing_) {
+            canvas.setColor(0xffff8833);
+        } else {
+            canvas.setColor(0xff3a3a3a);
+        }
+        canvas.circle(x, y, size);
 
-        // Border
-        unsigned int borderColor = glowing_ ? 0xffffaa55 : 0xff505050;
+        // Top highlight for raised look (not when pressed)
+        if (!pressed_) {
+            canvas.setColor(0x15ffffff);
+            float hlSize = size * 0.7f;
+            canvas.circle(x + (size - hlSize) / 2.0f, y + 1, hlSize);
+        }
+
+        // Border ring
+        unsigned int borderColor = pressed_ ? 0xffff8833 : (glowing_ ? 0xffffaa55 : 0xff555555);
         canvas.setColor(borderColor);
-        canvas.ring(cx - size / 2.0f, cy - size / 2.0f, size, 1.5f);
-
-        // Reset arrow icon (simplified: circular arc + triangle)
-        float iconSize = size * 0.35f;
-        float iconThick = 2.0f;
-
-        // Arc (partial circle)
-        canvas.setColor(glowing_ ? 0xff1e1e1e : 0xffcccccc);
-        canvas.flatArc(cx - iconSize, cy - iconSize, iconSize * 2, iconThick,
-                       0.0f, 4.5f);
-
-        // Small arrowhead
-        float arrowSize = iconSize * 0.4f;
-        float ax = cx + iconSize * 0.9f;
-        float ay = cy - iconSize * 0.1f;
-        canvas.triangleDown(ax - arrowSize / 2.0f, ay - arrowSize / 2.0f, arrowSize);
+        float inset = 0.5f;
+        canvas.roundedRectangleBorder(x + inset, y + inset,
+                                      size - inset * 2, size - inset * 2,
+                                      size / 2, 1.5f);
     }
 
     void mouseDown(const visage::MouseEvent&) override {
+        pressed_ = true;
         glowing_ = true;
         redraw();
         if (onPress)
@@ -62,10 +63,12 @@ public:
     }
 
     void mouseUp(const visage::MouseEvent&) override {
+        pressed_ = false;
         glowing_ = false;
         redraw();
     }
 
 private:
+    bool pressed_ = false;
     bool glowing_ = false;
 };

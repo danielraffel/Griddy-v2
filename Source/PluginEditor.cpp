@@ -6,7 +6,7 @@ namespace visage::fonts { extern ::visage::EmbeddedFile Lato_Regular_ttf; }
 
 GriddyAudioProcessorEditor::GriddyAudioProcessorEditor(GriddyAudioProcessor& p)
     : AudioProcessorEditor(&p), processorRef(p) {
-    setSize(580, 400);
+    setSize(580, 356);
     setResizable(false, false);
     startTimer(10);
 }
@@ -53,41 +53,42 @@ void GriddyAudioProcessorEditor::resized() {
 void GriddyAudioProcessorEditor::layoutChildren() {
     // XY pad in left panel
     if (xyPad_)
-        xyPad_->setBounds(14, 14, 236, 228);
+        xyPad_->setBounds(14, 14, 236, 222);
 
-    // Chaos and Swing knobs
+    // Chaos and Swing knobs (upper area of controls panel)
     if (chaosKnob_)
-        chaosKnob_->setBounds(280, 20, 70, 70);
+        chaosKnob_->setBounds(276, 14, 68, 68);
     if (swingKnob_)
-        swingKnob_->setBounds(360, 20, 70, 70);
+        swingKnob_->setBounds(354, 14, 68, 68);
 
-    // Reset button below knobs
+    // Reset button — centered below chaos/swing, 3/4 their size
+    // Chaos center X=310, Swing center X=388, midpoint=349
     if (resetButton_)
-        resetButton_->setBounds(305, 100, 50, 50);
+        resetButton_->setBounds(332, 90, 34, 34);
 
-    // Density sliders (right side of controls panel)
+    // Density sliders (shifted left for settings button breathing room)
     if (bdDensity_)
-        bdDensity_->setBounds(450, 14, 35, 150);
+        bdDensity_->setBounds(438, 14, 30, 148);
     if (sdDensity_)
-        sdDensity_->setBounds(490, 14, 35, 150);
+        sdDensity_->setBounds(472, 14, 30, 148);
     if (hhDensity_)
-        hhDensity_->setBounds(530, 14, 35, 150);
+        hhDensity_->setBounds(506, 14, 30, 148);
 
     // Velocity knobs below density sliders
     if (bdVelKnob_)
-        bdVelKnob_->setBounds(445, 186, 45, 55);
+        bdVelKnob_->setBounds(434, 178, 38, 50);
     if (sdVelKnob_)
-        sdVelKnob_->setBounds(485, 186, 45, 55);
+        sdVelKnob_->setBounds(468, 178, 38, 50);
     if (hhVelKnob_)
-        hhVelKnob_->setBounds(525, 186, 45, 55);
+        hhVelKnob_->setBounds(502, 178, 38, 50);
 
-    // LED matrix at bottom
+    // LED matrix at bottom (no extra padding below)
     if (ledMatrix_)
-        ledMatrix_->setBounds(14, 262, 552, 88);
+        ledMatrix_->setBounds(14, 250, 552, 98);
 
-    // Settings button in top-right of controls panel
+    // Settings button — with clear gap from HH slider
     if (settingsButton_)
-        settingsButton_->setBounds(550, 12, 20, 20);
+        settingsButton_->setBounds(550, 12, 16, 16);
 
     // Settings overlay covers everything
     if (settingsPanel_)
@@ -109,7 +110,7 @@ void GriddyAudioProcessorEditor::timerCallback() {
 void GriddyAudioProcessorEditor::createVisageUI() {
     rootFrame_ = std::make_unique<visage::Frame>();
 
-    // Draw dark background and panels (no title - it's in the OS title bar)
+    // Draw dark background and panels
     rootFrame_->onDraw() += [](visage::Canvas& canvas) {
         float w = static_cast<float>(canvas.width());
         float h = static_cast<float>(canvas.height());
@@ -120,40 +121,36 @@ void GriddyAudioProcessorEditor::createVisageUI() {
 
         // Background panel behind XY pad area
         canvas.setColor(0xff2a2a2a);
-        canvas.roundedRectangle(8, 8, 248, 240, 8.0f);
+        canvas.roundedRectangle(8, 8, 248, 232, 8.0f);
         canvas.setColor(0xff333333);
-        canvas.roundedRectangleBorder(8, 8, 248, 240, 8.0f, 1.0f);
+        canvas.roundedRectangleBorder(8, 8, 248, 232, 8.0f, 1.0f);
 
-        // Background panel behind controls area (knobs, sliders, velocity)
+        // Background panel behind controls area
         canvas.setColor(0xff2a2a2a);
-        canvas.roundedRectangle(264, 8, 308, 240, 8.0f);
+        canvas.roundedRectangle(264, 8, 304, 232, 8.0f);
         canvas.setColor(0xff333333);
-        canvas.roundedRectangleBorder(264, 8, 308, 240, 8.0f, 1.0f);
+        canvas.roundedRectangleBorder(264, 8, 304, 232, 8.0f, 1.0f);
 
         // "Velocity" label above velocity knobs
         canvas.setColor(0xffaaaaaa);
-        canvas.text("Velocity", labelFont, visage::Font::kCenter, 440, 170, 130, 14);
+        canvas.text("Velocity", labelFont, visage::Font::kCenter, 434, 164, 106, 14);
 
         // "Reset" label below reset button
         canvas.setColor(0xffaaaaaa);
-        canvas.text("Reset", labelFont, visage::Font::kCenter, 290, 155, 80, 14);
+        canvas.text("Reset", labelFont, visage::Font::kCenter, 316, 126, 66, 14);
 
         // Background panel behind LED matrix
         canvas.setColor(0xff2a2a2a);
-        canvas.roundedRectangle(8, 256, 564, 100, 8.0f);
+        canvas.roundedRectangle(8, 244, 564, 104, 8.0f);
         canvas.setColor(0xff333333);
-        canvas.roundedRectangleBorder(8, 256, 564, 100, 8.0f, 1.0f);
+        canvas.roundedRectangleBorder(8, 244, 564, 104, 8.0f, 1.0f);
     };
 
     // Create XY Pad
     auto xyPadOwned = std::make_unique<XYPadFrame>();
     xyPad_ = xyPadOwned.get();
-
-    // Initialize XY pad from current parameter values
     xyPad_->setX(*processorRef.parameters.getRawParameterValue("x"));
     xyPad_->setY(*processorRef.parameters.getRawParameterValue("y"));
-
-    // Wire XY pad drag to processor parameters
     xyPad_->onValueChange = [this](float x, float y) {
         if (auto* paramX = processorRef.parameters.getParameter("x"))
             paramX->setValueNotifyingHost(paramX->getNormalisableRange().convertTo0to1(x));
@@ -244,7 +241,7 @@ void GriddyAudioProcessorEditor::createVisageUI() {
     // Create Settings panel overlay
     auto settingsPanelOwned = std::make_unique<SettingsPanelFrame>();
     settingsPanel_ = settingsPanelOwned.get();
-    settingsPanel_->setVisible(false); // Start hidden so it doesn't intercept mouse events
+    settingsPanel_->setVisible(false);
 
     // Initialize settings panel from current parameter values
     settingsPanel_->setMidiChannel(static_cast<int>(*processorRef.parameters.getRawParameterValue("midi_channel")));
@@ -342,6 +339,9 @@ void GriddyAudioProcessorEditor::updateUIFromProcessor() {
     float bdDensity = *processorRef.parameters.getRawParameterValue("density_1_bd");
     float sdDensity = *processorRef.parameters.getRawParameterValue("density_2_sd");
     float hhDensity = *processorRef.parameters.getRawParameterValue("density_3_hh");
+    float bdVel = *processorRef.parameters.getRawParameterValue("velocity_1_bd");
+    float sdVel = *processorRef.parameters.getRawParameterValue("velocity_2_sd");
+    float hhVel = *processorRef.parameters.getRawParameterValue("velocity_3_hh");
 
     // Ensure engine has latest values for pattern generation (UI thread sync)
     engine.setX(paramX);
@@ -368,11 +368,11 @@ void GriddyAudioProcessorEditor::updateUIFromProcessor() {
 
     // Update velocity knobs
     if (bdVelKnob_)
-        bdVelKnob_->setValue(*processorRef.parameters.getRawParameterValue("velocity_1_bd"));
+        bdVelKnob_->setValue(bdVel);
     if (sdVelKnob_)
-        sdVelKnob_->setValue(*processorRef.parameters.getRawParameterValue("velocity_2_sd"));
+        sdVelKnob_->setValue(sdVel);
     if (hhVelKnob_)
-        hhVelKnob_->setValue(*processorRef.parameters.getRawParameterValue("velocity_3_hh"));
+        hhVelKnob_->setValue(hhVel);
 
     // Update settings panel MIDI learn state
     if (settingsPanel_) {
@@ -387,9 +387,10 @@ void GriddyAudioProcessorEditor::updateUIFromProcessor() {
         if (ledMatrix_) ledMatrix_->triggerResetAnimation(retrigger);
     }
 
-    // Update LED matrix
+    // Update LED matrix with patterns and velocity ranges
     if (ledMatrix_) {
         ledMatrix_->setDensities(bdDensity, sdDensity, hhDensity);
+        ledMatrix_->setVelocityRanges(bdVel, sdVel, hhVel);
         ledMatrix_->setPatterns(engine.getBDPattern(), engine.getSDPattern(), engine.getHHPattern());
         ledMatrix_->setCurrentStep(engine.getCurrentStep());
     }
