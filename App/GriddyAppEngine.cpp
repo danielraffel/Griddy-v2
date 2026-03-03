@@ -79,9 +79,22 @@ void GriddyAppEngine::setPlaying(bool isPlaying)
 
 void GriddyAppEngine::setRecording(bool isRecording)
 {
-    recording_.store(isRecording);
-    if (isRecording)
+    if (isRecording) {
+        // Pre-fill all 32 steps with current live values so that
+        // unrecorded steps don't default to zero (which silences patterns).
+        float x = x_.load(), y = y_.load();
+        float bd = bdDensity_.load(), sd = sdDensity_.load(), hh = hhDensity_.load();
+        float bv = bdVelocityRange_.load(), sv = sdVelocityRange_.load(), hv = hhVelocityRange_.load();
+        float ch = chaos_.load(), sw = swing_.load(), tm = tempo_.load();
+        for (int i = 0; i < 32; ++i) {
+            recordedX_[i] = x;           recordedY_[i] = y;
+            recordedBDDensity_[i] = bd;  recordedSDDensity_[i] = sd;  recordedHHDensity_[i] = hh;
+            recordedBDVelocity_[i] = bv; recordedSDVelocity_[i] = sv; recordedHHVelocity_[i] = hv;
+            recordedChaos_[i] = ch;      recordedSwing_[i] = sw;      recordedTempo_[i] = tm;
+        }
         hasRecording_.store(true);
+    }
+    recording_.store(isRecording);
 }
 
 void GriddyAppEngine::setMidiOnly(bool midiOnly)

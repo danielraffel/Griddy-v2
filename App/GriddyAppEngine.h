@@ -59,6 +59,29 @@ public:
 
     bool hasRecording() const { return hasRecording_.load(); }
 
+    // Reset playhead to step 0 in both engines
+    void resetStep() {
+        gridsEngine_.reset();
+        currentStep_ = 0;
+        samplesUntilNextStep_ = 0;
+    }
+
+    // Clear recorded automation data
+    void clearRecording() {
+        hasRecording_.store(false);
+        recordedX_.fill(0.0f);
+        recordedY_.fill(0.0f);
+        recordedBDDensity_.fill(0.0f);
+        recordedSDDensity_.fill(0.0f);
+        recordedHHDensity_.fill(0.0f);
+        recordedBDVelocity_.fill(0.0f);
+        recordedSDVelocity_.fill(0.0f);
+        recordedHHVelocity_.fill(0.0f);
+        recordedChaos_.fill(0.0f);
+        recordedSwing_.fill(0.0f);
+        recordedTempo_.fill(0.0f);
+    }
+
     // Access the underlying GridsEngine for pattern data
     GridsEngine& getGridsEngine() { return gridsEngine_; }
 

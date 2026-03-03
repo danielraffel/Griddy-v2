@@ -1,6 +1,9 @@
 #include "GriddyAppMainComponent.h"
 #include "Settings/SettingsManager.h"
 #include <visage_graphics/font.h>
+#if JUCE_IOS
+#include "KeyboardDoneHelper.h"
+#endif
 
 namespace visage::fonts { extern ::visage::EmbeddedFile Lato_Regular_ttf; }
 
@@ -30,6 +33,7 @@ GriddyAppMainComponent::GriddyAppMainComponent()
 
 GriddyAppMainComponent::~GriddyAppMainComponent()
 {
+    hideBpmEditor();
     stopTimer();
     shutdownAudio();
 
@@ -109,12 +113,57 @@ void GriddyAppMainComponent::createVisageUI()
 {
     rootFrame_ = std::make_unique<visage::Frame>();
 
-    // Dark background
-    rootFrame_->onDraw() += [](visage::Canvas& canvas) {
+    // Dark background + cell panels (drawn before children)
+    rootFrame_->onDraw() += [this](visage::Canvas& canvas) {
         float w = static_cast<float>(canvas.width());
         float h = static_cast<float>(canvas.height());
         canvas.setColor(0xff1e1e1e);
         canvas.fill(0, 0, w, h);
+
+        // Cell panels are drawn based on stored layout rects
+        visage::Font labelFont(10.0f, visage::fonts::Lato_Regular_ttf);
+
+        // XY pad cell
+        if (cellXY_.w > 0) {
+            canvas.setColor(0xff2a2a2a);
+            canvas.roundedRectangle(cellXY_.x, cellXY_.y, cellXY_.w, cellXY_.h, 8.0f);
+            canvas.setColor(0xff333333);
+            canvas.roundedRectangleBorder(cellXY_.x, cellXY_.y, cellXY_.w, cellXY_.h, 8.0f, 1.0f);
+        }
+
+        // LED matrix cell
+        if (cellLED_.w > 0) {
+            canvas.setColor(0xff2a2a2a);
+            canvas.roundedRectangle(cellLED_.x, cellLED_.y, cellLED_.w, cellLED_.h, 8.0f);
+            canvas.setColor(0xff333333);
+            canvas.roundedRectangleBorder(cellLED_.x, cellLED_.y, cellLED_.w, cellLED_.h, 8.0f, 1.0f);
+        }
+
+        // Transport cell
+        if (cellTransport_.w > 0) {
+            canvas.setColor(0xff2a2a2a);
+            canvas.roundedRectangle(cellTransport_.x, cellTransport_.y, cellTransport_.w, cellTransport_.h, 8.0f);
+            canvas.setColor(0xff333333);
+            canvas.roundedRectangleBorder(cellTransport_.x, cellTransport_.y, cellTransport_.w, cellTransport_.h, 8.0f, 1.0f);
+        }
+
+        // Controls cell (density + velocity + chaos/swing/reset)
+        if (cellControls_.w > 0) {
+            canvas.setColor(0xff2a2a2a);
+            canvas.roundedRectangle(cellControls_.x, cellControls_.y, cellControls_.w, cellControls_.h, 8.0f);
+            canvas.setColor(0xff333333);
+            canvas.roundedRectangleBorder(cellControls_.x, cellControls_.y, cellControls_.w, cellControls_.h, 8.0f, 1.0f);
+
+            // "Velocity" label above velocity knobs
+            canvas.setColor(0xffaaaaaa);
+            canvas.text("Velocity", labelFont, visage::Font::kCenter,
+                        velLabelRect_.x, velLabelRect_.y, velLabelRect_.w, velLabelRect_.h);
+
+            // "Reset" label below reset button
+            canvas.setColor(0xffaaaaaa);
+            canvas.text("Reset", labelFont, visage::Font::kCenter,
+                        resetLabelRect_.x, resetLabelRect_.y, resetLabelRect_.w, resetLabelRect_.h);
+        }
     };
 
     // --- XY Pad ---
@@ -145,12 +194,19 @@ void GriddyAppMainComponent::createVisageUI()
         engine_.setRecording(rec);
         recordButton_->setActive(rec);
     };
+    recordButton_->onLongPress = [this]() {
+        engine_.clearRecording();
+        recordButton_->setActive(false);
+    };
 
     auto tempoOwned = std::make_unique<TempoFrame>();
     tempoControl_ = tempoOwned.get();
     tempoControl_->setBpm(engine_.getTempo());
     tempoControl_->onValueChange = [this](float bpm) {
         engine_.setTempo(bpm);
+    };
+    tempoControl_->onEditRequest = [this]() {
+        showBpmEditor();
     };
 
     auto midiToggleOwned = std::make_unique<ToggleFrame>("MIDI Only", 0xff58a8d0);
@@ -205,7 +261,7 @@ void GriddyAppMainComponent::createVisageUI()
     auto resetOwned = std::make_unique<ResetButtonFrame>();
     resetButton_ = resetOwned.get();
     resetButton_->onPress = [this]() {
-        engine_.getGridsEngine().reset();
+        engine_.resetStep();
     };
 
     // --- LED Matrix ---
@@ -261,83 +317,209 @@ void GriddyAppMainComponent::layoutChildren()
     }
 #endif
 
-    float pad = 12.0f;
+    float pad = 10.0f;       // Padding between cells
+    float cellPad = 6.0f;    // Padding inside cells
     float x0 = safeLeft + pad;
     float y0 = safeTop + pad;
     float contentW = w - safeLeft - safeRight - pad * 2;
     float contentH = h - safeTop - safeBottom - pad * 2;
 
-    // Responsive layout for portrait mode
-    // XY pad: ~35% of content height
-    float xyH = contentH * 0.32f;
-    float xyW = std::min(contentW, xyH); // Keep roughly square
-    float xyX = x0 + (contentW - xyW) / 2.0f;
+    float curY = y0;
+
+    // ========================================
+    // Cell 1: XY Pad (top, roughly square)
+    // ========================================
+    float xyOuterH = contentH * 0.30f;
+    float xyOuterW = contentW;
+    float xyInnerW = std::min(xyOuterW - cellPad * 2, xyOuterH - cellPad * 2);
+    float xyInnerH = xyInnerW;
+    xyOuterH = xyInnerH + cellPad * 2; // Tighten cell to content
+
+    cellXY_ = { x0, curY, xyOuterW, xyOuterH };
+
     if (xyPad_)
-        xyPad_->setBounds(xyX, y0, xyW, xyH);
+        xyPad_->setBounds(x0 + (xyOuterW - xyInnerW) / 2.0f,
+                          curY + cellPad,
+                          xyInnerW, xyInnerH);
 
-    float curY = y0 + xyH + 8.0f;
+    curY += xyOuterH + pad;
 
-    // Transport row: Play, Record, Tempo, MIDI toggle
-    float transportH = 56.0f;
-    float btnW = 56.0f;
-    float tempoW = contentW - btnW * 2 - 52.0f - pad * 3;
+    // ========================================
+    // Cell 2: LED Matrix (below XY pad)
+    // ========================================
+    float ledOuterH = 80.0f;
+
+    cellLED_ = { x0, curY, contentW, ledOuterH };
+
+    if (ledMatrix_)
+        ledMatrix_->setBounds(x0 + cellPad, curY + cellPad,
+                              contentW - cellPad * 2, ledOuterH - cellPad * 2);
+
+    curY += ledOuterH + pad;
+
+    // ========================================
+    // Cell 3: Transport (Play, Record, Tempo, MIDI)
+    // ========================================
+    float transportOuterH = 64.0f;
+
+    cellTransport_ = { x0, curY, contentW, transportOuterH };
+
+    float tInnerY = curY + cellPad;
+    float tInnerH = transportOuterH - cellPad * 2;
+    float tInnerX = x0 + cellPad;
+    float tInnerW = contentW - cellPad * 2;
+
+    float btnW = 52.0f;
+    float tempoW = tInnerW - btnW * 2 - 52.0f - pad * 3;
     tempoW = std::max(80.0f, tempoW);
 
     if (playButton_)
-        playButton_->setBounds(x0, curY, btnW, transportH);
+        playButton_->setBounds(tInnerX, tInnerY, btnW, tInnerH);
     if (recordButton_)
-        recordButton_->setBounds(x0 + btnW + pad, curY, btnW, transportH);
+        recordButton_->setBounds(tInnerX + btnW + pad, tInnerY, btnW, tInnerH);
     if (tempoControl_)
-        tempoControl_->setBounds(x0 + btnW * 2 + pad * 2, curY + 12.0f, tempoW, 32.0f);
+        tempoControl_->setBounds(tInnerX + btnW * 2 + pad * 2, tInnerY + 10.0f, tempoW, 32.0f);
     if (midiOnlyToggle_)
-        midiOnlyToggle_->setBounds(x0 + contentW - 48.0f, curY, 48.0f, transportH);
+        midiOnlyToggle_->setBounds(tInnerX + tInnerW - 48.0f, tInnerY, 48.0f, tInnerH);
 
-    curY += transportH + 8.0f;
+    curY += transportOuterH + pad;
 
-    // Density sliders + Velocity knobs side by side
-    float remainingH = (y0 + contentH) - curY;
-    float ledH = std::min(80.0f, remainingH * 0.25f);
-    float controlsH = remainingH - ledH - 8.0f;
-    float sliderH = controlsH * 0.55f;
-    float knobH = controlsH * 0.45f;
+    // ========================================
+    // Cell 4: Controls (Density/Velocity columns + Chaos/Swing/Reset)
+    // ========================================
+    float controlsOuterH = (y0 + contentH) - curY;
 
-    // Density sliders (3 columns, left half)
-    float colW = contentW / 6.0f;
+    cellControls_ = { x0, curY, contentW, controlsOuterH };
+
+    float cInnerX = x0 + cellPad;
+    float cInnerY = curY + cellPad;
+    float cInnerW = contentW - cellPad * 2;
+    float cInnerH = controlsOuterH - cellPad * 2;
+
+    // Left half: 3 columns — density slider, "Velocity" label, velocity knob
+    float leftW = cInnerW * 0.5f;
+    float densColW = leftW / 3.0f;
+    float velLabelH = 14.0f;
+    float densH = cInnerH * 0.55f;    // density slider takes upper portion
+    float velY = cInnerY + densH + velLabelH;
+    float velH = cInnerH - densH - velLabelH;  // velocity gets remainder
+
     if (bdDensity_)
-        bdDensity_->setBounds(x0, curY, colW, sliderH);
+        bdDensity_->setBounds(cInnerX, cInnerY, densColW, densH);
     if (sdDensity_)
-        sdDensity_->setBounds(x0 + colW, curY, colW, sliderH);
+        sdDensity_->setBounds(cInnerX + densColW, cInnerY, densColW, densH);
     if (hhDensity_)
-        hhDensity_->setBounds(x0 + colW * 2, curY, colW, sliderH);
+        hhDensity_->setBounds(cInnerX + densColW * 2, cInnerY, densColW, densH);
 
-    // Chaos, Swing, Reset (right half, upper)
-    float rightX = x0 + colW * 3 + pad;
-    float rightW = contentW - colW * 3 - pad;
-    float modKnobW = rightW / 3.0f;
-    if (chaosKnob_)
-        chaosKnob_->setBounds(rightX, curY, modKnobW, sliderH * 0.6f);
-    if (swingKnob_)
-        swingKnob_->setBounds(rightX + modKnobW, curY, modKnobW, sliderH * 0.6f);
-    if (resetButton_)
-        resetButton_->setBounds(rightX + modKnobW * 2 + (modKnobW - 34.0f) / 2.0f,
-                                curY + 8.0f, 34.0f, 34.0f);
+    // "Velocity" label between density and velocity
+    velLabelRect_ = { cInnerX, cInnerY + densH, leftW, velLabelH };
 
-    curY += sliderH;
-
-    // Velocity knobs row
-    float velKnobW = contentW / 6.0f;
     if (bdVelKnob_)
-        bdVelKnob_->setBounds(x0, curY, velKnobW, knobH);
+        bdVelKnob_->setBounds(cInnerX, velY, densColW, velH);
     if (sdVelKnob_)
-        sdVelKnob_->setBounds(x0 + velKnobW, curY, velKnobW, knobH);
+        sdVelKnob_->setBounds(cInnerX + densColW, velY, densColW, velH);
     if (hhVelKnob_)
-        hhVelKnob_->setBounds(x0 + velKnobW * 2, curY, velKnobW, knobH);
+        hhVelKnob_->setBounds(cInnerX + densColW * 2, velY, densColW, velH);
 
-    curY += knobH;
+    // Right half: Chaos, Swing, Reset — tightly grouped
+    float rightX = cInnerX + leftW + pad;
+    float rightW = cInnerW - leftW - pad;
+    float modKnobW = rightW / 2.0f;
 
-    // LED matrix at bottom
-    if (ledMatrix_)
-        ledMatrix_->setBounds(x0, curY, contentW, ledH);
+    float resetSize = 34.0f;
+    float resetLabelH = 12.0f;
+    // Cap mod knob height — smaller than density to keep Reset close
+    float modKnobH = std::min(densH * 0.75f, cInnerH * 0.42f);
+    modKnobH = std::max(modKnobH, 60.0f);
+
+    if (chaosKnob_)
+        chaosKnob_->setBounds(rightX, cInnerY, modKnobW, modKnobH);
+    if (swingKnob_)
+        swingKnob_->setBounds(rightX + modKnobW, cInnerY, modKnobW, modKnobH);
+
+    // Reset button centered right below chaos/swing with small gap
+    float resetX = rightX + (rightW - resetSize) / 2.0f;
+    float resetY = cInnerY + modKnobH + 4.0f;
+    if (resetButton_)
+        resetButton_->setBounds(resetX, resetY, resetSize, resetSize);
+
+    // "Reset" label below button
+    resetLabelRect_ = { rightX, resetY + resetSize + 1.0f, rightW, resetLabelH };
+
+    // Request redraw to update cell backgrounds
+    if (rootFrame_)
+        rootFrame_->redraw();
+}
+
+void GriddyAppMainComponent::showBpmEditor()
+{
+    if (bpmEditor_) return; // Already showing
+
+    // The JUCE TextEditor is invisible behind Visage's Metal UIView on iOS,
+    // but it still receives keyboard input. We create it off-screen and use
+    // native iOS APIs (inputAccessoryView) for the Done button + tap-to-dismiss.
+    bpmEditor_ = std::make_unique<juce::TextEditor>();
+    bpmEditor_->setInputRestrictions(3, "0123456789");
+    bpmEditor_->setKeyboardType(juce::TextInputTarget::phoneNumberKeyboard);
+    bpmEditor_->setText(juce::String((int)std::round(tempoControl_->getBpm())));
+    bpmEditor_->selectAll();
+
+    bpmEditor_->onTextChange = [this]() {
+        if (!bpmEditor_) return;
+        int val = bpmEditor_->getText().getIntValue();
+        if (val >= (int)TempoFrame::kMinBpm && val <= (int)TempoFrame::kMaxBpm) {
+            tempoControl_->setBpm(static_cast<float>(val));
+            engine_.setTempo(static_cast<float>(val));
+        }
+    };
+
+    bpmEditor_->onReturnKey = [this]() { hideBpmEditor(); };
+    bpmEditor_->onEscapeKey = [this]() { hideBpmEditor(); };
+    bpmEditor_->onFocusLost = [this]() {
+        juce::MessageManager::callAsync([this]() { hideBpmEditor(); });
+    };
+
+    // Place off-screen (hidden behind Metal view anyway)
+    bpmEditor_->setBounds(-200, -200, 100, 30);
+    addAndMakeVisible(*bpmEditor_);
+    bpmEditor_->grabKeyboardFocus();
+
+#if JUCE_IOS
+    // Install native "Done" toolbar above keyboard + tap-background-to-dismiss
+    juce::MessageManager::callAsync([this]() {
+        if (!bpmEditor_) return;
+        installKeyboardDoneButton([this]() {
+            juce::MessageManager::callAsync([this]() { hideBpmEditor(); });
+        });
+    });
+#endif
+}
+
+void GriddyAppMainComponent::hideBpmEditor()
+{
+#if JUCE_IOS
+    removeKeyboardDoneButton();
+#endif
+    if (bpmDoneBtn_) {
+        removeChildComponent(bpmDoneBtn_.get());
+        bpmDoneBtn_.reset();
+    }
+    if (bpmEditor_) {
+        removeChildComponent(bpmEditor_.get());
+        bpmEditor_.reset();
+    }
+    if (bpmScrim_) {
+        bpmScrim_->removeMouseListener(this);
+        removeChildComponent(bpmScrim_.get());
+        bpmScrim_.reset();
+    }
+}
+
+void GriddyAppMainComponent::mouseDown(const juce::MouseEvent& e)
+{
+    // If the BPM editor is showing and the click landed on the scrim, dismiss
+    if (bpmScrim_ && e.eventComponent == bpmScrim_.get())
+        hideBpmEditor();
 }
 
 void GriddyAppMainComponent::updateFromEngine()

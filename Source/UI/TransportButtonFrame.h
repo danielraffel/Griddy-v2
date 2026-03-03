@@ -6,6 +6,9 @@
 #include <functional>
 #include <string>
 #include <cmath>
+#include <chrono>
+#include <thread>
+#include <atomic>
 
 namespace visage::fonts { extern ::visage::EmbeddedFile Lato_Regular_ttf; }
 
@@ -18,6 +21,7 @@ public:
         : Frame("TransportButton"), label_(label), icon_(icon), color_(color) {}
 
     std::function<void()> onPress;
+    std::function<void()> onLongPress;  // Fires during hold after 1.5s
 
     bool isActive() const { return active_; }
 
@@ -88,32 +92,45 @@ public:
 
     void mouseDown(const visage::MouseEvent&) override {
         pressed_ = true;
+        longPressFired_ = false;
+        longPressGeneration_++;
         redraw();
+
+        // Start a background timer to detect long-press (1.5s hold)
+        if (onLongPress) {
+            int gen = longPressGeneration_.load();
+            std::thread([this, gen]() {
+                std::this_thread::sleep_for(std::chrono::milliseconds(1500));
+                if (pressed_ && longPressGeneration_.load() == gen) {
+                    longPressFired_ = true;
+                    if (onLongPress)
+                        onLongPress();
+                }
+            }).detach();
+        }
     }
 
     void mouseUp(const visage::MouseEvent&) override {
         if (pressed_) {
             pressed_ = false;
             redraw();
-            if (onPress)
+            // Only fire normal press if long-press didn't fire
+            if (!longPressFired_ && onPress)
                 onPress();
         }
     }
 
 private:
     void drawPlayTriangle(visage::Canvas& canvas, float cx, float cy, float size) {
-        // Approximate play triangle with a narrow tall rounded rect rotated
-        // Since Visage Canvas doesn't have polygon/path yet, use a rightward-pointing shape
-        float halfH = size * 0.5f;
-        float left = cx - size * 0.3f;
-        // Draw 3 small rectangles to approximate a triangle
-        for (int i = 0; i < 5; ++i) {
-            float frac = (float)i / 4.0f;
-            float rowW = size * 0.6f * (1.0f - frac * 0.8f);
-            float rowY = cy - halfH + (size * frac);
-            float rowH = size / 5.0f;
-            canvas.fill(left, rowY, rowW, rowH);
-        }
+        // Right-pointing play triangle using Canvas triangle API
+        // Slight rightward offset (standard play icon is visually centered that way)
+        float halfH = size * 0.55f;
+        float halfW = size * 0.5f;
+        float left = cx - halfW * 0.6f;
+        float right = cx + halfW * 0.8f;
+        canvas.triangle(left, cy - halfH,   // top-left
+                         left, cy + halfH,   // bottom-left
+                         right, cy);          // right tip
     }
 
     static unsigned int dimColor(unsigned int color, float amount) {
@@ -131,4 +148,6 @@ private:
     unsigned int color_;
     bool active_ = false;
     bool pressed_ = false;
+    bool longPressFired_ = false;
+    std::atomic<int> longPressGeneration_ { 0 };
 };

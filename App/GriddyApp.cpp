@@ -51,10 +51,12 @@ private:
             setVisible(true);
 
 #if JUCE_IOS || JUCE_ANDROID
+            // Use 'this' (MainWindow) — it has the native peer.
+            // Using getContentComponent() fails the jassert at juce_Desktop.cpp:326
+            // because child components don't have their own ComponentPeer.
             juce::MessageManager::callAsync([this]
             {
-                if (auto* content = getContentComponent())
-                    juce::Desktop::getInstance().setKioskModeComponent(content, false);
+                juce::Desktop::getInstance().setKioskModeComponent(this, false);
             });
 #endif
         }

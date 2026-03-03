@@ -6,6 +6,7 @@
 #include <functional>
 #include <string>
 #include <cmath>
+#include <chrono>
 
 namespace visage::fonts { extern ::visage::EmbeddedFile Lato_Regular_ttf; }
 
@@ -27,6 +28,7 @@ public:
     }
 
     std::function<void(float)> onValueChange;
+    std::function<void()> onEditRequest;  // fired on double-tap (iOS numeric keyboard)
 
     void draw(visage::Canvas& canvas) override {
         float w = width();
@@ -37,10 +39,11 @@ public:
         canvas.roundedRectangle(0, 0, w, h, h / 2.0f);
 
         // Border
-        canvas.setColor(dragging_ ? 0xff58a8d0 : 0xff333333);
+        unsigned int borderColor = dragging_ ? 0xff58a8d0 : 0xff333333;
+        canvas.setColor(borderColor);
         canvas.roundedRectangleBorder(0, 0, w, h, h / 2.0f, 1.0f);
 
-        // Fill indicator (proportional to tempo range)
+        // Fill indicator
         float normalized = (bpm_ - kMinBpm) / (kMaxBpm - kMinBpm);
         float fillW = (w - 8.0f) * normalized;
         if (fillW > 2.0f) {
@@ -48,10 +51,9 @@ public:
             canvas.roundedRectangle(4, 4, fillW, h - 8, (h - 8) / 2.0f);
         }
 
-        // BPM text centered
+        // BPM text
         char bpmText[16];
         snprintf(bpmText, sizeof(bpmText), "%d BPM", (int)std::round(bpm_));
-
         visage::Font font(16.0f, visage::fonts::Lato_Regular_ttf);
         canvas.setColor(0xffffffff);
         canvas.text(bpmText, font, visage::Font::kCenter, 0, 0, w, h);
@@ -61,12 +63,15 @@ public:
         dragStartX_ = e.position.x;
         dragStartBpm_ = bpm_;
         dragging_ = true;
+        wasDragged_ = false;
         redraw();
     }
 
     void mouseDrag(const visage::MouseEvent& e) override {
-        // Horizontal drag: full width of control = full BPM range
         float delta = (e.position.x - dragStartX_) / width() * (kMaxBpm - kMinBpm) * 0.5f;
+        if (std::abs(delta) > 2.0f)
+            wasDragged_ = true;
+
         float newBpm = std::round(dragStartBpm_ + delta);
         newBpm = std::max(kMinBpm, std::min(kMaxBpm, newBpm));
 
@@ -80,6 +85,20 @@ public:
 
     void mouseUp(const visage::MouseEvent&) override {
         dragging_ = false;
+
+        if (!wasDragged_) {
+            auto now = std::chrono::steady_clock::now();
+            auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                now - lastTapTime_).count();
+            if (elapsed < 400 && elapsed > 0) {
+                // Double-tap: request numeric input
+                if (onEditRequest)
+                    onEditRequest();
+                lastTapTime_ = {};
+            } else {
+                lastTapTime_ = now;
+            }
+        }
         redraw();
     }
 
@@ -88,4 +107,6 @@ private:
     float dragStartX_ = 0.0f;
     float dragStartBpm_ = 120.0f;
     bool dragging_ = false;
+    bool wasDragged_ = false;
+    std::chrono::steady_clock::time_point lastTapTime_{};
 };
