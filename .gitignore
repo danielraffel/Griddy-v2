@@ -25,6 +25,21 @@
 # IDEs (optional)
 /.vscode/
 /.idea/
+/.cursor/
+
+# Docs (drafts, internal notes)
+/docs/
+
+# AI prompts and implementation notes
+/ai/
+IMPLEMENTATION_SUMMARY.md
+
+# Templates and prompts (starter kit artifacts)
+/templates/
+/prompts/
+
+# DiagnosticKit and tools
+/Tools/
 
 # Environment variables
 .env
