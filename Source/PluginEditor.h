@@ -13,7 +13,8 @@
 #include <visage_ui/frame.h>
 
 class GriddyAudioProcessorEditor : public juce::AudioProcessorEditor,
-                                    public juce::Timer {
+                                    public juce::Timer,
+                                    public juce::KeyListener {
 public:
     explicit GriddyAudioProcessorEditor(GriddyAudioProcessor&);
     ~GriddyAudioProcessorEditor() override;
@@ -21,6 +22,13 @@ public:
     void paint(juce::Graphics&) override;
     void resized() override;
     void timerCallback() override;
+    bool keyPressed(const juce::KeyPress& key, juce::Component* originatingComponent) override;
+
+    /** Toggle the settings panel open/closed (for Cmd+, menu shortcut). */
+    void toggleSettings() {
+        if (settingsPanel_)
+            settingsPanel_->toggleVisible();
+    }
 
 private:
     void createVisageUI();
@@ -47,6 +55,21 @@ private:
     RotaryKnobFrame* hhVelKnob_ = nullptr;
 
     bool uiCreated_ = false;
+
+#if JUCE_MAC
+    // macOS Settings menu item (standalone only)
+    class SettingsMenuBarModel : public juce::MenuBarModel {
+    public:
+        std::function<void()> onSettings;
+        juce::StringArray getMenuBarNames() override { return {}; }
+        juce::PopupMenu getMenuForIndex(int, const juce::String&) override { return {}; }
+        void menuItemSelected(int id, int) override {
+            if (id == 1 && onSettings) onSettings();
+        }
+    };
+    std::unique_ptr<SettingsMenuBarModel> settingsMenuModel_;
+    std::unique_ptr<juce::PopupMenu> settingsMenuPopup_;
+#endif
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(GriddyAudioProcessorEditor)
 };

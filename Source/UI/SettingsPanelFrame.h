@@ -84,11 +84,11 @@ public:
         canvas.setColor(0xcc000000);
         canvas.fill(0, 0, w, h);
 
-        // Panel
+        // Panel — clamp to fit within available frame height
         float panelW = 540.0f;
-        float panelH = 360.0f;
+        float panelH = std::min(360.0f, h - 10.0f);
         float panelX = (w - panelW) / 2.0f;
-        float panelY = (h - panelH) / 2.0f;
+        float panelY = std::max(5.0f, (h - panelH) / 2.0f);
 
         canvas.setColor(0xff2a2a2a);
         canvas.roundedRectangle(panelX, panelY, panelW, panelH, 8.0f);
@@ -96,17 +96,21 @@ public:
         canvas.roundedRectangleBorder(panelX, panelY, panelW, panelH, 8.0f, 1.0f);
 
         // Header
+        float headerH = 32.0f;
         canvas.setColor(0xffff8833);
         canvas.text("Settings", fontHeader, visage::Font::kCenter,
-                    panelX, panelY + 4, panelW, 24);
+                    panelX, panelY + 8, panelW, headerH - 8);
 
         // Close button
+        float closeBtnSize = 22.0f;
+        float closeBtnX = panelX + panelW - closeBtnSize - 10;
+        float closeBtnY = panelY + (headerH - closeBtnSize) / 2.0f;
         canvas.setColor(0xff888888);
         canvas.text("X", font, visage::Font::kCenter,
-                    panelX + panelW - 28, panelY + 6, 20, 20);
+                    closeBtnX, closeBtnY, closeBtnSize, closeBtnSize);
 
         // Tab bar
-        float tabBarY = panelY + 28;
+        float tabBarY = panelY + headerH;
         float tabH = 28.0f;
         float tabW = panelW / TAB_COUNT;
         const char* tabNames[] = { "General", "Advanced", "MIDI", "Modulation" };
@@ -140,19 +144,23 @@ public:
         if (!Frame::isVisible()) return;
 
         float w = width(), h = height();
-        float panelW = 540.0f, panelH = 360.0f;
-        float panelX = (w - panelW) / 2.0f, panelY = (h - panelH) / 2.0f;
+        float panelW = 540.0f, panelH = std::min(360.0f, h - 10.0f);
+        float panelX = (w - panelW) / 2.0f, panelY = std::max(5.0f, (h - panelH) / 2.0f);
         float mx = e.position.x, my = e.position.y;
 
         // Close button
-        if (mx >= panelX + panelW - 28 && mx <= panelX + panelW - 8 &&
-            my >= panelY + 6 && my <= panelY + 26) { hide(); return; }
+        float headerH = 32.0f;
+        float closeBtnSize = 22.0f;
+        float closeBtnX = panelX + panelW - closeBtnSize - 10;
+        float closeBtnY = panelY + (headerH - closeBtnSize) / 2.0f;
+        if (mx >= closeBtnX && mx <= closeBtnX + closeBtnSize &&
+            my >= closeBtnY && my <= closeBtnY + closeBtnSize) { hide(); return; }
 
         // Click outside
         if (mx < panelX || mx > panelX + panelW || my < panelY || my > panelY + panelH) { hide(); return; }
 
         // Tab clicks
-        float tabBarY = panelY + 28;
+        float tabBarY = panelY + headerH;
         float tabH = 28.0f;
         float tabW = panelW / TAB_COUNT;
         if (my >= tabBarY && my <= tabBarY + tabH) {

@@ -65,6 +65,7 @@ void JuceVisageBridge::createEmbeddedWindow() {
     if (bounds.getWidth() <= 0 || bounds.getHeight() <= 0)
         return;
 
+
     visageWindow_ = std::make_unique<visage::ApplicationWindow>();
 
     // Set DPI scale from JUCE display info before showing

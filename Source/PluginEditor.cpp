@@ -6,12 +6,20 @@ namespace visage::fonts { extern ::visage::EmbeddedFile Lato_Regular_ttf; }
 
 GriddyAudioProcessorEditor::GriddyAudioProcessorEditor(GriddyAudioProcessor& p)
     : AudioProcessorEditor(&p), processorRef(p) {
-    setSize(580, 356);
+    setSize(580, 330);
     setResizable(false, false);
     startTimer(10);
 }
 
 GriddyAudioProcessorEditor::~GriddyAudioProcessorEditor() {
+    if (auto* topLevel = getTopLevelComponent())
+        topLevel->removeKeyListener(this);
+
+#if JUCE_MAC
+    juce::MenuBarModel::setMacMainMenu(nullptr);
+    settingsMenuModel_.reset();
+    settingsMenuPopup_.reset();
+#endif
     stopTimer();
     if (bridge_)
         bridge_->shutdownRendering();
@@ -36,6 +44,22 @@ GriddyAudioProcessorEditor::~GriddyAudioProcessorEditor() {
     bridge_.reset();
 }
 
+bool GriddyAudioProcessorEditor::keyPressed(const juce::KeyPress& key, juce::Component*) {
+    // Cmd+, toggles settings (standalone)
+    if (key == juce::KeyPress(',', juce::ModifierKeys::commandModifier, 0)) {
+        toggleSettings();
+        return true;
+    }
+    // ESC closes settings panel
+    if (key == juce::KeyPress::escapeKey) {
+        if (settingsPanel_ && settingsPanel_->isVisible()) {
+            settingsPanel_->hide();
+            return true;
+        }
+    }
+    return false;
+}
+
 void GriddyAudioProcessorEditor::paint(juce::Graphics& g) {
     g.fillAll(juce::Colour(0xff1e1e1e));
 }
@@ -51,6 +75,10 @@ void GriddyAudioProcessorEditor::resized() {
 }
 
 void GriddyAudioProcessorEditor::layoutChildren() {
+    // Layout uses 8px margins on all sides and between rows/columns.
+    // Total: 8 + 248 + 8 + 308 + 8 = 580 width
+    //        8 + 232 + 8 + 74  + 8 = 330 height
+
     // XY pad in left panel
     if (xyPad_)
         xyPad_->setBounds(14, 14, 236, 222);
@@ -62,7 +90,6 @@ void GriddyAudioProcessorEditor::layoutChildren() {
         swingKnob_->setBounds(354, 14, 68, 68);
 
     // Reset button — centered below chaos/swing, 3/4 their size
-    // Chaos center X=310, Swing center X=388, midpoint=349
     if (resetButton_)
         resetButton_->setBounds(332, 90, 34, 34);
 
@@ -82,9 +109,9 @@ void GriddyAudioProcessorEditor::layoutChildren() {
     if (hhVelKnob_)
         hhVelKnob_->setBounds(502, 178, 38, 50);
 
-    // LED matrix at bottom (no extra padding below)
+    // LED matrix at bottom (4px padding inside the 74px panel background)
     if (ledMatrix_)
-        ledMatrix_->setBounds(14, 250, 552, 98);
+        ledMatrix_->setBounds(14, 252, 552, 66);
 
     // Settings button — with clear gap from HH slider
     if (settingsButton_)
@@ -127,9 +154,9 @@ void GriddyAudioProcessorEditor::createVisageUI() {
 
         // Background panel behind controls area
         canvas.setColor(0xff2a2a2a);
-        canvas.roundedRectangle(264, 8, 304, 232, 8.0f);
+        canvas.roundedRectangle(264, 8, 308, 232, 8.0f);
         canvas.setColor(0xff333333);
-        canvas.roundedRectangleBorder(264, 8, 304, 232, 8.0f, 1.0f);
+        canvas.roundedRectangleBorder(264, 8, 308, 232, 8.0f, 1.0f);
 
         // "Velocity" label above velocity knobs
         canvas.setColor(0xffaaaaaa);
@@ -139,11 +166,11 @@ void GriddyAudioProcessorEditor::createVisageUI() {
         canvas.setColor(0xffaaaaaa);
         canvas.text("Reset", labelFont, visage::Font::kCenter, 316, 126, 66, 14);
 
-        // Background panel behind LED matrix
+        // Background panel behind LED matrix (y=248, h=74, ends at 322, 8px from bottom)
         canvas.setColor(0xff2a2a2a);
-        canvas.roundedRectangle(8, 244, 564, 104, 8.0f);
+        canvas.roundedRectangle(8, 248, 564, 74, 8.0f);
         canvas.setColor(0xff333333);
-        canvas.roundedRectangleBorder(8, 244, 564, 104, 8.0f, 1.0f);
+        canvas.roundedRectangleBorder(8, 248, 564, 74, 8.0f, 1.0f);
     };
 
     // Create XY Pad
@@ -313,9 +340,31 @@ void GriddyAudioProcessorEditor::createVisageUI() {
     rootFrame_->addChild(ledMatrixOwned.release());
     rootFrame_->addChild(settingsPanelOwned.release());
 
-    // Native macOS title bar for standalone mode
-    if (auto* window = findParentComponentOfClass<juce::DocumentWindow>())
+    // Native macOS title bar for standalone mode.
+    // CRITICAL: setUsingNativeTitleBar() removes JUCE's drawn title bar border
+    // (27px top + 1px sides) but the window stays the same native size. The content
+    // area expands to fill the full window, making the editor larger than requested.
+    // Fix: re-assert setSize() after the switch to force correct dimensions.
+    if (auto* window = findParentComponentOfClass<juce::DocumentWindow>()) {
         window->setUsingNativeTitleBar(true);
+        setSize(580, 330);
+
+#if JUCE_MAC
+        // Add "Settings..." to macOS app menu via JUCE's MenuBarModel
+        settingsMenuModel_ = std::make_unique<SettingsMenuBarModel>();
+        settingsMenuModel_->onSettings = [this]() { toggleSettings(); };
+
+        settingsMenuPopup_ = std::make_unique<juce::PopupMenu>();
+        settingsMenuPopup_->addItem(1, "Settings...");
+        settingsMenuPopup_->addSeparator();
+
+        juce::MenuBarModel::setMacMainMenu(settingsMenuModel_.get(), settingsMenuPopup_.get());
+#endif
+    }
+
+    // Register key listener on top-level window to catch Cmd+, and ESC
+    if (auto* topLevel = getTopLevelComponent())
+        topLevel->addKeyListener(this);
 
     // Set up bridge
     bridge_ = std::make_unique<JuceVisageBridge>();

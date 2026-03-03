@@ -71,7 +71,11 @@ public:
         float usableWidth = totalWidth - 3.0f * groupGap; // 3 gaps between 4 groups
         float stepSpacing = usableWidth / 32.0f;
         float ledSize = std::min(stepSpacing * 0.8f, 10.0f);
-        float rowSpacing = h / 4.0f;
+        // Row centers — compact layout minimizing bottom waste
+        float barNumHeight = 14.0f;
+        float topY = barNumHeight + ledSize / 2.0f;     // BD row center
+        float bottomY = h - ledSize / 2.0f - 6.0f;      // HH row center (extra padding from edge)
+        float midY = (topY + bottomY) / 2.0f;            // SD row center
 
         // Density thresholds
         uint8_t bdThresh = static_cast<uint8_t>(255 * (1.0f - bdDensity_));
@@ -80,11 +84,11 @@ public:
 
         // Row text labels
         canvas.setColor(0xffcc2222);
-        canvas.text("BD", font, visage::Font::kLeft, 4, rowSpacing * 1 - 6, labelWidth, 12);
+        canvas.text("BD", font, visage::Font::kLeft, 4, topY - 6, labelWidth, 12);
         canvas.setColor(0xff22cc22);
-        canvas.text("SD", font, visage::Font::kLeft, 4, rowSpacing * 2 - 6, labelWidth, 12);
+        canvas.text("SD", font, visage::Font::kLeft, 4, midY - 6, labelWidth, 12);
         canvas.setColor(0xffcccc22);
-        canvas.text("HH", font, visage::Font::kLeft, 4, rowSpacing * 3 - 6, labelWidth, 12);
+        canvas.text("HH", font, visage::Font::kLeft, 4, bottomY - 6, labelWidth, 12);
 
         // Group separators and bar numbers
         visage::Font barFont(8.0f, visage::fonts::Lato_Regular_ttf);
@@ -102,8 +106,8 @@ public:
             if (g > 0) {
                 float sepX = groupStartX - groupGap / 2.0f;
                 canvas.setColor(0x30ffffff);
-                canvas.segment(sepX, rowSpacing * 0.7f,
-                               sepX, rowSpacing * 3 + ledSize,
+                canvas.segment(sepX, topY - ledSize,
+                               sepX, bottomY + ledSize,
                                0.5f, false);
             }
         }
@@ -144,17 +148,17 @@ public:
             float hhVelBright = velocityBrightness(hhAccent, hhVelocity_);
 
             // BD LED
-            drawLED(canvas, lx, rowSpacing * 1 - ledSize / 2, ledSize,
+            drawLED(canvas, lx, topY - ledSize / 2, ledSize,
                     bdOn, bdAccent, isCurrent, resetGlow, bdVelBright,
                     0xff331111, 0xffcc2222, 0xffff4444);
 
             // SD LED
-            drawLED(canvas, lx, rowSpacing * 2 - ledSize / 2, ledSize,
+            drawLED(canvas, lx, midY - ledSize / 2, ledSize,
                     sdOn, sdAccent, isCurrent, resetGlow, sdVelBright,
                     0xff113311, 0xff22cc22, 0xff44ff44);
 
             // HH LED
-            drawLED(canvas, lx, rowSpacing * 3 - ledSize / 2, ledSize,
+            drawLED(canvas, lx, bottomY - ledSize / 2, ledSize,
                     hhOn, hhAccent, isCurrent, resetGlow, hhVelBright,
                     0xff333311, 0xffcccc22, 0xffffff44);
         }
