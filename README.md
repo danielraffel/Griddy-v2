@@ -13,16 +13,24 @@ Griddy generates drum patterns by sampling points on a topographic map. Drag an 
 
 ## Building
 
-Requires CMake, Xcode, and JUCE (auto-downloaded on first build).
+Requires CMake and Xcode. JUCE is auto-downloaded on first build.
 
 ```bash
-# Generate Xcode project and build standalone app
+# Create your local build config
+cp .env.example .env
+
+# Generate the Xcode project
 ./scripts/generate_and_open_xcode.sh
+
+# Local builds
 ./scripts/build.sh standalone
+./scripts/build.sh all local
 
 # iOS
 cmake -B build-ios -G Xcode -DCMAKE_SYSTEM_NAME=iOS
 ```
+
+For signed, notarized, or published macOS releases, fill in the Apple Developer and GitHub fields in `.env` first.
 
 ## Architecture
 

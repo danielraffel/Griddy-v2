@@ -1369,8 +1369,12 @@ create_github_release() {
 
 # Main build process
 main() {
-    # Always bump version (even for local builds to ensure proper versioning)
-    bump_version
+    # Allow retries of signing/notarization/package flows without consuming a new version.
+    if [[ "${SKIP_VERSION_BUMP:-0}" != "1" ]]; then
+        bump_version
+    else
+        echo -e "${YELLOW}Skipping version bump (SKIP_VERSION_BUMP=1)${NC}"
+    fi
 
     # Check DiagnosticKit setup early (before building anything)
     check_diagnostic_setup

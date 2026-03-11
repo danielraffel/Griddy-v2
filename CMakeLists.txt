@@ -58,8 +58,13 @@ project(${PROJECT_NAME} VERSION ${PLUGIN_VERSION})
 # Fetch JUCE using FetchContent
 include(FetchContent)
 
-# Use shared JUCE cache to avoid re-downloading across projects
-set(FETCHCONTENT_BASE_DIR "$ENV{HOME}/.juce_cache")
+# Use a shared JUCE cache by default, but allow an override so release builds
+# can be isolated from other concurrent JUCE projects on the same machine.
+set(JUCE_CACHE_BASE_DIR $ENV{JUCE_CACHE_BASE_DIR})
+if(NOT JUCE_CACHE_BASE_DIR)
+    set(JUCE_CACHE_BASE_DIR "$ENV{HOME}/.juce_cache")
+endif()
+set(FETCHCONTENT_BASE_DIR "${JUCE_CACHE_BASE_DIR}")
 
 FetchContent_Declare(
     JUCE 
@@ -344,24 +349,32 @@ if(IOS OR CMAKE_SYSTEM_NAME STREQUAL "iOS")
     )
 endif()
 
-# Set global C++ standard for all targets
+# Set global C++/Objective-C++ standard for all targets
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_OBJCXX_STANDARD 17)
+set(CMAKE_OBJCXX_STANDARD_REQUIRED ON)
 
-# Fix code signing and C++ standard for VST3 helper tool (macOS only)
+# Fix code signing and language standard for the JUCE-generated VST3 helper (macOS only)
 if(NOT CMAKE_SYSTEM_NAME STREQUAL "iOS")
-    if(TARGET juce_vst3_helper)
-        set_target_properties(juce_vst3_helper PROPERTIES
-            XCODE_ATTRIBUTE_CODE_SIGNING_REQUIRED "NO"
-            XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "-"
-            XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED "NO"
-            CXX_STANDARD 17
-            CXX_STANDARD_REQUIRED YES
-            XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "c++17"
-            XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++"
-        )
-        target_compile_features(juce_vst3_helper PRIVATE cxx_std_17)
-        # Explicitly set compile options
-        target_compile_options(juce_vst3_helper PRIVATE -std=c++17)
-    endif()
+    foreach(vst3_helper_target IN ITEMS juce_vst3_helper ${PROJECT_NAME}_vst3_helper)
+        if(TARGET ${vst3_helper_target})
+            set_target_properties(${vst3_helper_target} PROPERTIES
+                XCODE_ATTRIBUTE_CODE_SIGNING_REQUIRED "NO"
+                XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY "-"
+                XCODE_ATTRIBUTE_CODE_SIGNING_ALLOWED "NO"
+                CXX_STANDARD 17
+                CXX_STANDARD_REQUIRED YES
+                OBJCXX_STANDARD 17
+                OBJCXX_STANDARD_REQUIRED YES
+                XCODE_ATTRIBUTE_CLANG_CXX_LANGUAGE_STANDARD "gnu++17"
+                XCODE_ATTRIBUTE_CLANG_CXX_LIBRARY "libc++"
+            )
+            target_compile_features(${vst3_helper_target} PRIVATE cxx_std_17)
+            target_compile_options(${vst3_helper_target} PRIVATE
+                $<$<COMPILE_LANGUAGE:CXX>:-std=gnu++17>
+                $<$<COMPILE_LANGUAGE:OBJCXX>:-std=gnu++17>
+            )
+        endif()
+    endforeach()
 endif()
