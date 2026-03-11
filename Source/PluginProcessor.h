@@ -98,6 +98,8 @@ public:
     float getModulatedX() const;
     float getModulatedY() const;
     bool isResetModulated() const;
+    bool shouldUseRealtimeModulationPreview() const;
+    uint64_t getRealtimeModulationPreviewGeneration() const;
 #ifdef ENABLE_VELOCITY_SYSTEM
     float getModulatedBDVelocity() const;
     float getModulatedSDVelocity() const;
@@ -120,6 +122,8 @@ private:
     std::atomic<float> modulatedX_ { 0.5f };
     std::atomic<float> modulatedY_ { 0.5f };
     std::atomic<bool> resetModulated_ { false };
+    std::atomic<bool> realtimeModulationPreviewActive_ { false };
+    std::atomic<uint64_t> realtimeModulationPreviewGeneration_ { 0 };
 #ifdef ENABLE_VELOCITY_SYSTEM
     std::atomic<float> modulatedBDVelocity_ { 0.5f };
     std::atomic<float> modulatedSDVelocity_ { 0.5f };

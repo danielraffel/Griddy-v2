@@ -552,18 +552,34 @@ void GriddyAudioProcessorEditor::updateUIFromProcessor() {
     float swing = *processorRef.parameters.getRawParameterValue("swing");
 
 #ifdef ENABLE_MODULATION_MATRIX
-    paramX = processorRef.getModulatedX();
-    paramY = processorRef.getModulatedY();
-    bdDensity = processorRef.getModulatedBDDensity();
-    sdDensity = processorRef.getModulatedSDDensity();
-    hhDensity = processorRef.getModulatedHHDensity();
-    chaos = processorRef.getModulatedChaos();
-    swing = processorRef.getModulatedSwing();
+    const auto previewGeneration = processorRef.getRealtimeModulationPreviewGeneration();
+    if (previewGeneration != lastRealtimePreviewGeneration_) {
+        lastRealtimePreviewGeneration_ = previewGeneration;
+        staleRealtimePreviewFrames_ = 0;
+    } else if (staleRealtimePreviewFrames_ < 1000) {
+        ++staleRealtimePreviewFrames_;
+    }
+
+    const bool useRealtimePreview =
+        processorRef.shouldUseRealtimeModulationPreview() && staleRealtimePreviewFrames_ <= 2;
+
+    if (!processorRef.shouldUseRealtimeModulationPreview())
+        staleRealtimePreviewFrames_ = 0;
+
+    if (useRealtimePreview) {
+        paramX = processorRef.getModulatedX();
+        paramY = processorRef.getModulatedY();
+        bdDensity = processorRef.getModulatedBDDensity();
+        sdDensity = processorRef.getModulatedSDDensity();
+        hhDensity = processorRef.getModulatedHHDensity();
+        chaos = processorRef.getModulatedChaos();
+        swing = processorRef.getModulatedSwing();
 #ifdef ENABLE_VELOCITY_SYSTEM
-    bdVel = processorRef.getModulatedBDVelocity();
-    sdVel = processorRef.getModulatedSDVelocity();
-    hhVel = processorRef.getModulatedHHVelocity();
+        bdVel = processorRef.getModulatedBDVelocity();
+        sdVel = processorRef.getModulatedSDVelocity();
+        hhVel = processorRef.getModulatedHHVelocity();
 #endif
+    }
 #endif
 
     // Ensure engine has latest values for pattern generation (UI thread sync)

@@ -61,6 +61,8 @@ private:
     RotaryKnobFrame* hhVelKnob_ = nullptr;
     std::unordered_set<juce::RangedAudioParameter*> activeParameterGestures_;
     int resetGlowFramesRemaining_ = 0;
+    uint64_t lastRealtimePreviewGeneration_ = 0;
+    int staleRealtimePreviewFrames_ = 0;
 
     bool uiCreated_ = false;
 

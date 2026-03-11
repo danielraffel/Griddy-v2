@@ -212,6 +212,10 @@ void GriddyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 {
     juce::ignoreUnused (buffer);
 
+#ifdef ENABLE_MODULATION_MATRIX
+    realtimeModulationPreviewGeneration_.fetch_add(1, std::memory_order_relaxed);
+#endif
+
     // Process incoming MIDI for MIDI learn and CC control
     for (const auto metadata : midiMessages)
     {
@@ -237,10 +241,20 @@ void GriddyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     // Get playhead info
     auto playHead = getPlayHead();
-    if (!playHead) return;
+    if (!playHead) {
+#ifdef ENABLE_MODULATION_MATRIX
+        realtimeModulationPreviewActive_.store(false);
+#endif
+        return;
+    }
 
     auto posInfo = playHead->getPosition();
-    if (!posInfo.hasValue()) return;
+    if (!posInfo.hasValue()) {
+#ifdef ENABLE_MODULATION_MATRIX
+        realtimeModulationPreviewActive_.store(false);
+#endif
+        return;
+    }
 
     auto pos = *posInfo;
     auto ppq = pos.getPpqPosition();
@@ -252,6 +266,9 @@ void GriddyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
 
     // Don't generate MIDI during count-in (unless in live mode)
     if (inCountIn && !liveMode) {
+#ifdef ENABLE_MODULATION_MATRIX
+        realtimeModulationPreviewActive_.store(false);
+#endif
         if (wasInCountIn != inCountIn) {
             gridsEngine.reset();
             sampleCounter = 0;
@@ -309,6 +326,9 @@ void GriddyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     // Generate MIDI when playing, recording, OR in live mode
     if (!playing && !recording && !liveMode) {
         isPlaying = false;
+#ifdef ENABLE_MODULATION_MATRIX
+        realtimeModulationPreviewActive_.store(false);
+#endif
         return;
     }
 
@@ -321,6 +341,10 @@ void GriddyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
         ppqOffsetAtReset = 0.0;
     }
     isPlaying = playing || recording || liveMode;
+
+#ifdef ENABLE_MODULATION_MATRIX
+    realtimeModulationPreviewActive_.store(isPlaying);
+#endif
 
     if (ppq.hasValue())
         lastPpqPosition = *ppq;
@@ -662,6 +686,10 @@ float GriddyAudioProcessor::getModulatedChaos() const { return modulatedChaos_.l
 float GriddyAudioProcessor::getModulatedSwing() const { return modulatedSwing_.load(); }
 float GriddyAudioProcessor::getModulatedX() const { return modulatedX_.load(); }
 float GriddyAudioProcessor::getModulatedY() const { return modulatedY_.load(); }
+bool GriddyAudioProcessor::shouldUseRealtimeModulationPreview() const { return realtimeModulationPreviewActive_.load(); }
+uint64_t GriddyAudioProcessor::getRealtimeModulationPreviewGeneration() const {
+    return realtimeModulationPreviewGeneration_.load(std::memory_order_relaxed);
+}
 bool GriddyAudioProcessor::isResetModulated() const { return resetModulated_.load(); }
 #ifdef ENABLE_VELOCITY_SYSTEM
 float GriddyAudioProcessor::getModulatedBDVelocity() const { return modulatedBDVelocity_.load(); }
