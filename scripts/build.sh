@@ -711,30 +711,15 @@ create_installer() {
     # Get version from .env
     VERSION="${VERSION_MAJOR:-1}.${VERSION_MINOR:-0}.${VERSION_PATCH:-0}"
 
-    # Create temporary directory for package
-    PKG_ROOT="/tmp/${PROJECT_NAME}_installer"
-    rm -rf "$PKG_ROOT"
-    mkdir -p "$PKG_ROOT"
-
-    # Copy plugins to package
-    for format in $BUILD_FORMATS; do
-        case "$format" in
-            AU)
-                PLUGIN_PATH="$HOME/Library/Audio/Plug-Ins/Components/${PROJECT_NAME}.component"
-                if [[ -d "$PLUGIN_PATH" ]]; then
-                    mkdir -p "$PKG_ROOT/Library/Audio/Plug-Ins/Components"
-                    cp -R "$PLUGIN_PATH" "$PKG_ROOT/Library/Audio/Plug-Ins/Components/"
-                fi
-                ;;
-            VST3)
-                PLUGIN_PATH="$HOME/Library/Audio/Plug-Ins/VST3/${PROJECT_NAME}.vst3"
-                if [[ -d "$PLUGIN_PATH" ]]; then
-                    mkdir -p "$PKG_ROOT/Library/Audio/Plug-Ins/VST3"
-                    cp -R "$PLUGIN_PATH" "$PKG_ROOT/Library/Audio/Plug-Ins/VST3/"
-                fi
-                ;;
-        esac
-    done
+    # Create temporary directories for packaging. Use separate component packages so
+    # the AU, VST3, and standalone app can keep the same bundle identifier without
+    # PackageKit trying to atomically upgrade them as a single bundle.
+    PKG_WORKDIR="/tmp/${PROJECT_NAME}_installer"
+    COMPONENT_PKG_DIR="$PKG_WORKDIR/components"
+    SUPPORT_ROOT="$PKG_WORKDIR/support-root"
+    DIST_PATH="$PKG_WORKDIR/distribution.xml"
+    rm -rf "$PKG_WORKDIR"
+    mkdir -p "$COMPONENT_PKG_DIR" "$SUPPORT_ROOT"
 
     # Count applications to determine installation strategy
     local app_count=0
@@ -763,37 +748,79 @@ create_installer() {
     fi
 
     # Determine installation strategy
-    local use_app_folder=false
     local app_install_root=""
+    local app_install_location=""
 
     if [[ $app_count -gt 1 ]]; then
-        use_app_folder=true
-        app_install_root="$PKG_ROOT/Applications/${PROJECT_NAME}"
+        app_install_root="$SUPPORT_ROOT/Applications/${PROJECT_NAME}"
+        app_install_location="/Applications/${PROJECT_NAME}"
         echo "📁 Multiple apps detected ($app_count) - installing to /Applications/${PROJECT_NAME}/"
     else
-        use_app_folder=false
-        app_install_root="$PKG_ROOT/Applications"
+        app_install_root="$SUPPORT_ROOT/Applications"
+        app_install_location="/Applications"
         echo "📁 Single app - installing directly to /Applications/"
     fi
 
-    # Create the appropriate directory structure
-    mkdir -p "$app_install_root"
+    local component_pkgs=()
 
-    # Install standalone app
+    # Package plugin formats as distinct component packages.
+    for format in $BUILD_FORMATS; do
+        case "$format" in
+            AU)
+                PLUGIN_PATH="$HOME/Library/Audio/Plug-Ins/Components/${PROJECT_NAME}.component"
+                if [[ -d "$PLUGIN_PATH" ]]; then
+                    local au_pkg="$COMPONENT_PKG_DIR/${PROJECT_NAME}_AU.pkg"
+                    echo "Packaging AU component..."
+                    pkgbuild --component "$PLUGIN_PATH" \
+                        --install-location "/Library/Audio/Plug-Ins/Components" \
+                        --identifier "${PROJECT_BUNDLE_ID}.pkg.au" \
+                        --version "$VERSION" \
+                        "$au_pkg"
+                    component_pkgs+=("$au_pkg")
+                fi
+                ;;
+            VST3)
+                PLUGIN_PATH="$HOME/Library/Audio/Plug-Ins/VST3/${PROJECT_NAME}.vst3"
+                if [[ -d "$PLUGIN_PATH" ]]; then
+                    local vst3_pkg="$COMPONENT_PKG_DIR/${PROJECT_NAME}_VST3.pkg"
+                    echo "Packaging VST3 component..."
+                    pkgbuild --component "$PLUGIN_PATH" \
+                        --install-location "/Library/Audio/Plug-Ins/VST3" \
+                        --identifier "${PROJECT_BUNDLE_ID}.pkg.vst3" \
+                        --version "$VERSION" \
+                        "$vst3_pkg"
+                    component_pkgs+=("$vst3_pkg")
+                fi
+                ;;
+        esac
+    done
+
     if [[ "$has_standalone" == "true" ]]; then
-        echo "Including standalone app in installer..."
-        cp -R "$STANDALONE_PATH" "$app_install_root/"
+        local standalone_pkg="$COMPONENT_PKG_DIR/${PROJECT_NAME}_Standalone.pkg"
+        echo "Packaging standalone app..."
+        pkgbuild --component "$STANDALONE_PATH" \
+            --install-location "$app_install_location" \
+            --identifier "${PROJECT_BUNDLE_ID}.pkg.standalone" \
+            --version "$VERSION" \
+            "$standalone_pkg"
+        component_pkgs+=("$standalone_pkg")
     fi
 
-    # Install diagnostics app (if exists)
     if [[ "$has_diagnostics" == "true" ]]; then
-        echo "Including diagnostics app in installer..."
-        cp -R "$DIAGNOSTIC_PATH" "$app_install_root/"
+        local diagnostics_pkg="$COMPONENT_PKG_DIR/${PROJECT_NAME}_Diagnostics.pkg"
+        echo "Packaging diagnostics app..."
+        pkgbuild --component "$DIAGNOSTIC_PATH" \
+            --install-location "$app_install_location" \
+            --identifier "${PROJECT_BUNDLE_ID}.pkg.diagnostics" \
+            --version "$VERSION" \
+            "$diagnostics_pkg"
+        component_pkgs+=("$diagnostics_pkg")
     fi
 
     # Install uninstaller
     if [[ "$has_uninstaller" == "true" ]]; then
         echo "Including uninstaller..."
+        mkdir -p "$app_install_root"
         local uninstaller_path="$app_install_root/${PROJECT_NAME} Uninstaller.command"
 
         # Copy and customize the uninstaller template
@@ -806,13 +833,33 @@ create_installer() {
         chmod +x "$uninstaller_path"
     fi
 
+    if [[ "$has_uninstaller" == "true" ]]; then
+        local support_pkg="$COMPONENT_PKG_DIR/${PROJECT_NAME}_Support.pkg"
+        echo "Packaging support files..."
+        pkgbuild --root "$SUPPORT_ROOT" \
+            --identifier "${PROJECT_BUNDLE_ID}.pkg.support" \
+            --version "$VERSION" \
+            "$support_pkg"
+        component_pkgs+=("$support_pkg")
+    fi
+
+    if [[ ${#component_pkgs[@]} -eq 0 ]]; then
+        echo -e "${RED}Error: No installer components were found${NC}"
+        return 1
+    fi
+
+    local synth_args=()
+    for component_pkg in "${component_pkgs[@]}"; do
+        synth_args+=(--package "$component_pkg")
+    done
+    productbuild --synthesize "${synth_args[@]}" "$DIST_PATH"
+
     # Build the package
     if [[ "$sign_package" == "true" ]]; then
         PKG_PATH="$HOME/Desktop/${PROJECT_NAME}_${VERSION}.pkg"
 
-        pkgbuild --root "$PKG_ROOT" \
-            --identifier "$PROJECT_BUNDLE_ID" \
-            --version "$VERSION" \
+        productbuild --distribution "$DIST_PATH" \
+            --package-path "$COMPONENT_PKG_DIR" \
             --sign "$INSTALLER_CERT" \
             "$PKG_PATH"
 
@@ -829,9 +876,8 @@ create_installer() {
         # Unsigned package for fast testing
         PKG_PATH="$HOME/Desktop/${PROJECT_NAME}_${VERSION}_unsigned.pkg"
 
-        pkgbuild --root "$PKG_ROOT" \
-            --identifier "$PROJECT_BUNDLE_ID" \
-            --version "$VERSION" \
+        productbuild --distribution "$DIST_PATH" \
+            --package-path "$COMPONENT_PKG_DIR" \
             "$PKG_PATH"
     fi
 
@@ -865,7 +911,7 @@ create_installer() {
     fi
 
     # Clean up
-    rm -rf "$PKG_ROOT" "$DMG_ROOT"
+    rm -rf "$PKG_WORKDIR" "$DMG_ROOT"
 
     echo -e "${GREEN}Installer created:${NC}"
     echo "  PKG: $PKG_PATH"
