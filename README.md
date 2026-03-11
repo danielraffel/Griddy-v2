@@ -6,6 +6,11 @@ A topographic drum sequencer built with [JUCE](https://juce.com) and a GPU-accel
 
 Griddy generates drum patterns by sampling points on a topographic map. Drag an XY pad to explore the terrain — different positions produce different rhythmic patterns across multiple instrument channels. The patterns are generated using interpolation across a grid of pre-computed rhythmic maps (inspired by the [Mutable Instruments Grids](https://pichenettes.github.io/mutable-instruments-documentation/modules/grids/) algorithm).
 
+## Download
+
+- [Download the latest macOS installer (PKG)](https://github.com/danielraffel/Griddy/releases/download/v1.0.64/Griddy_1.0.64.pkg)
+- [View all releases](https://github.com/danielraffel/Griddy/releases)
+
 ## Platforms
 
 - **macOS** — Standalone app and AU/VST3 audio plugin (JUCE + Visage UI)
