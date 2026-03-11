@@ -24,6 +24,7 @@ public:
     std::function<void(bool)> onMidiThruChange;
     std::function<void(bool)> onLiveModeChange;
     std::function<void(int)> onResetModeChange;
+    std::function<void()> onOpenAcknowledgements;
     std::function<void()> onMidiLearnStart;
     std::function<void()> onMidiLearnStop;
     // Advanced tab
@@ -105,7 +106,13 @@ public:
         float closeBtnSize = 22.0f;
         float closeBtnX = panelX + panelW - closeBtnSize - 10;
         float closeBtnY = panelY + (headerH - closeBtnSize) / 2.0f;
-        canvas.setColor(0xff888888);
+        bool closeHovered = isHoveredRect(closeBtnX, closeBtnY, closeBtnSize, closeBtnSize);
+        bool closePressed = isPressedRect(closeBtnX, closeBtnY, closeBtnSize, closeBtnSize);
+        if (closeHovered || closePressed) {
+            canvas.setColor(closePressed ? 0xff3a3a3a : 0xff333333);
+            canvas.roundedRectangle(closeBtnX, closeBtnY, closeBtnSize, closeBtnSize, 4.0f);
+        }
+        canvas.setColor(closePressed ? 0xffff8833 : (closeHovered ? 0xffdddddd : 0xff888888));
         canvas.text("X", font, visage::Font::kCenter,
                     closeBtnX, closeBtnY, closeBtnSize, closeBtnSize);
 
@@ -116,13 +123,20 @@ public:
         const char* tabNames[] = { "General", "Advanced", "MIDI", "Modulation" };
         for (int i = 0; i < TAB_COUNT; i++) {
             float tx = panelX + i * tabW;
+            bool tabHovered = isHoveredRect(tx, tabBarY, tabW, tabH);
+            bool tabPressed = isPressedRect(tx, tabBarY, tabW, tabH);
             if (i == activeTab_) {
-                canvas.setColor(0xff3a3a3a);
+                canvas.setColor(tabPressed ? 0xff4a4a4a : (tabHovered ? 0xff444444 : 0xff3a3a3a));
                 canvas.fill(tx, tabBarY, tabW, tabH);
                 canvas.setColor(0xffff8833);
                 canvas.fill(tx, tabBarY + tabH - 2, tabW, 2);
+            } else if (tabHovered || tabPressed) {
+                canvas.setColor(tabPressed ? 0xff3a3a3a : 0xff303030);
+                canvas.fill(tx, tabBarY, tabW, tabH);
             }
-            canvas.setColor(i == activeTab_ ? 0xffffffff : 0xff888888);
+            canvas.setColor(i == activeTab_
+                                ? 0xffffffff
+                                : (tabHovered ? 0xffcccccc : 0xff888888));
             canvas.text(tabNames[i], font, visage::Font::kCenter, tx, tabBarY + 2, tabW, tabH - 4);
         }
 
@@ -142,6 +156,14 @@ public:
 
     void mouseDown(const visage::MouseEvent& e) override {
         if (!Frame::isVisible()) return;
+
+        mouseInside_ = true;
+        mouseX_ = e.position.x;
+        mouseY_ = e.position.y;
+        mouseDownX_ = e.position.x;
+        mouseDownY_ = e.position.y;
+        mouseIsDown_ = true;
+        redraw();
 
         float w = width(), h = height();
         float panelW = 540.0f, panelH = std::min(360.0f, h - 10.0f);
@@ -182,6 +204,34 @@ public:
         }
     }
 
+    void mouseMove(const visage::MouseEvent& e) override {
+        mouseInside_ = true;
+        mouseX_ = e.position.x;
+        mouseY_ = e.position.y;
+        redraw();
+    }
+
+    void mouseDrag(const visage::MouseEvent& e) override {
+        mouseInside_ = true;
+        mouseX_ = e.position.x;
+        mouseY_ = e.position.y;
+        redraw();
+    }
+
+    void mouseUp(const visage::MouseEvent& e) override {
+        mouseInside_ = true;
+        mouseX_ = e.position.x;
+        mouseY_ = e.position.y;
+        mouseIsDown_ = false;
+        redraw();
+    }
+
+    void mouseExit(const visage::MouseEvent&) override {
+        mouseInside_ = false;
+        mouseIsDown_ = false;
+        redraw();
+    }
+
 private:
     // ==================== GENERAL TAB ====================
     void drawGeneralTab(visage::Canvas& canvas, const visage::Font& font,
@@ -196,7 +246,11 @@ private:
         canvas.setColor(0xffff8833);
         canvas.text("Options", fontTitle, visage::Font::kLeft, x, cy, w, rowH); cy += rowH;
         drawToggle(canvas, font, x, cy, w, rowH, "MIDI Thru", midiThru_); cy += rowH;
-        drawToggle(canvas, font, x, cy, w, rowH, "Live Mode", liveMode_);
+        drawToggle(canvas, font, x, cy, w, rowH, "Live Mode", liveMode_); cy += rowH + 12.0f;
+
+        canvas.setColor(0xffff8833);
+        canvas.text("About", fontTitle, visage::Font::kLeft, x, cy, w, rowH); cy += rowH;
+        drawActionButton(canvas, font, x, cy, 128.0f, rowH, "Acknowledgements");
     }
 
     void handleGeneralClick(float mx, float my, float x, float y, float w, float rowH) {
@@ -205,6 +259,14 @@ private:
         if (my >= cy && my < cy + rowH) { resetMode_ = 1; if (onResetModeChange) onResetModeChange(1); redraw(); return; } cy += rowH + 8 + rowH;
         if (my >= cy && my < cy + rowH && mx >= x + w - 40) { midiThru_ = !midiThru_; if (onMidiThruChange) onMidiThruChange(midiThru_); redraw(); return; } cy += rowH;
         if (my >= cy && my < cy + rowH && mx >= x + w - 40) { liveMode_ = !liveMode_; if (onLiveModeChange) onLiveModeChange(liveMode_); redraw(); return; }
+        cy += rowH + 12.0f + rowH;
+
+        float buttonW = 128.0f;
+        if (mx >= x && mx <= x + buttonW && my >= cy && my <= cy + rowH) {
+            if (onOpenAcknowledgements)
+                onOpenAcknowledgements();
+            return;
+        }
     }
 
     // ==================== ADVANCED TAB ====================
@@ -221,7 +283,11 @@ private:
         float bx = x;
         for (int i = 0; i < 11; i++) {
             if (bx + btnW > x + w) { bx = x; cy += btnH + gap; }
-            canvas.setColor(resetQuantize_ == i ? 0xffff8833 : 0xff444444);
+            bool hovered = isHoveredRect(bx, cy, btnW, btnH);
+            bool pressed = isPressedRect(bx, cy, btnW, btnH);
+            canvas.setColor(resetQuantize_ == i
+                                ? (pressed ? 0xffffaa55 : (hovered ? 0xffff9944 : 0xffff8833))
+                                : (pressed ? 0xff555555 : (hovered ? 0xff4d4d4d : 0xff444444)));
             canvas.roundedRectangle(bx, cy, btnW, btnH, 3.0f);
             canvas.setColor(resetQuantize_ == i ? 0xff000000 : 0xffcccccc);
             canvas.text(quantNames[i], fontSmall, visage::Font::kCenter, bx, cy, btnW, btnH);
@@ -320,8 +386,16 @@ private:
         float btnW = 60.0f, btnH = 20.0f;
         float btnX = x + w - btnW - 4;
         float btnY = cy + (rowH - btnH) / 2;
-        canvas.setColor(midiLearnActive_ ? 0xffff4444 : 0xff555555);
+        bool hovered = isHoveredRect(btnX, btnY, btnW, btnH);
+        bool pressed = isPressedRect(btnX, btnY, btnW, btnH);
+        canvas.setColor(midiLearnActive_
+                            ? (pressed ? 0xffff6666 : (hovered ? 0xffff5555 : 0xffff4444))
+                            : (pressed ? 0xff666666 : (hovered ? 0xff5c5c5c : 0xff555555)));
         canvas.roundedRectangle(btnX, btnY, btnW, btnH, 4.0f);
+        if (hovered || pressed) {
+            canvas.setColor(pressed ? 0xffff8833 : 0xff888888);
+            canvas.roundedRectangleBorder(btnX, btnY, btnW, btnH, 4.0f, 1.0f);
+        }
         canvas.setColor(0xffffffff);
         canvas.text(midiLearnActive_ ? "Stop" : "Learn", font, visage::Font::kCenter, btnX, cy, btnW, rowH);
     }
@@ -340,9 +414,16 @@ private:
         // +/- buttons
         float btnSize = 20.0f, valueW = 40.0f;
         float rightX = x + w - btnSize * 2 - valueW - 4;
+        float btnY = y + (rowH - btnSize) / 2.0f;
+        bool minusHovered = isHoveredRect(rightX, btnY, btnSize, btnSize);
+        bool minusPressed = isPressedRect(rightX, btnY, btnSize, btnSize);
+        bool plusHovered = isHoveredRect(rightX + btnSize + valueW, btnY, btnSize, btnSize);
+        bool plusPressed = isPressedRect(rightX + btnSize + valueW, btnY, btnSize, btnSize);
 
-        canvas.setColor(noteNum > 0 ? 0xff555555 : 0xff333333);
-        canvas.roundedRectangle(rightX, y + (rowH - btnSize) / 2, btnSize, btnSize, 4.0f);
+        canvas.setColor(noteNum > 0
+                            ? (minusPressed ? 0xff666666 : (minusHovered ? 0xff5c5c5c : 0xff555555))
+                            : 0xff333333);
+        canvas.roundedRectangle(rightX, btnY, btnSize, btnSize, 4.0f);
         canvas.setColor(noteNum > 0 ? 0xffcccccc : 0xff555555);
         canvas.text("-", font, visage::Font::kCenter, rightX, y, btnSize, rowH);
 
@@ -350,8 +431,10 @@ private:
         std::string valStr = std::to_string(noteNum);
         canvas.text(valStr.c_str(), font, visage::Font::kCenter, rightX + btnSize, y, valueW, rowH);
 
-        canvas.setColor(noteNum < 127 ? 0xff555555 : 0xff333333);
-        canvas.roundedRectangle(rightX + btnSize + valueW, y + (rowH - btnSize) / 2, btnSize, btnSize, 4.0f);
+        canvas.setColor(noteNum < 127
+                            ? (plusPressed ? 0xff666666 : (plusHovered ? 0xff5c5c5c : 0xff555555))
+                            : 0xff333333);
+        canvas.roundedRectangle(rightX + btnSize + valueW, btnY, btnSize, btnSize, 4.0f);
         canvas.setColor(noteNum < 127 ? 0xffcccccc : 0xff555555);
         canvas.text("+", font, visage::Font::kCenter, rightX + btnSize + valueW, y, btnSize, rowH);
     }
@@ -390,7 +473,11 @@ private:
         float subTabW = 60.0f;
         for (int i = 0; i < 2; i++) {
             float tx = x + i * (subTabW + 4);
-            canvas.setColor(activeLFO_ == i ? 0xffff8833 : 0xff444444);
+            bool hovered = isHoveredRect(tx, cy, subTabW, 20.0f);
+            bool pressed = isPressedRect(tx, cy, subTabW, 20.0f);
+            canvas.setColor(activeLFO_ == i
+                                ? (pressed ? 0xffffaa55 : (hovered ? 0xffff9944 : 0xffff8833))
+                                : (pressed ? 0xff555555 : (hovered ? 0xff4d4d4d : 0xff444444)));
             canvas.roundedRectangle(tx, cy, subTabW, 20, 3.0f);
             canvas.setColor(activeLFO_ == i ? 0xff000000 : 0xffcccccc);
             const char* lfoNames[] = { "LFO 1", "LFO 2" };
@@ -411,7 +498,11 @@ private:
             float shapeBtnW = 36.0f;
             for (int s = 0; s < 5; s++) {
                 float sx = x + 55 + s * (shapeBtnW + 3);
-                canvas.setColor(lfoShape_[lfo] == s ? 0xffff8833 : 0xff444444);
+                bool hovered = isHoveredRect(sx, cy + 2, shapeBtnW, rowH - 4);
+                bool pressed = isPressedRect(sx, cy + 2, shapeBtnW, rowH - 4);
+                canvas.setColor(lfoShape_[lfo] == s
+                                    ? (pressed ? 0xffffaa55 : (hovered ? 0xffff9944 : 0xffff8833))
+                                    : (pressed ? 0xff555555 : (hovered ? 0xff4d4d4d : 0xff444444)));
                 canvas.roundedRectangle(sx, cy + 2, shapeBtnW, rowH - 4, 3.0f);
                 canvas.setColor(lfoShape_[lfo] == s ? 0xff000000 : 0xffcccccc);
                 canvas.text(shapeNames[s], fontSmall, visage::Font::kCenter, sx, cy, shapeBtnW, rowH);
@@ -535,10 +626,12 @@ private:
                    float x, float y, float w, float rowH, const char* label, bool selected) {
         float r = 5.0f;
         float rx = x + 4, ry = y + (rowH - r * 2) / 2.0f;
-        canvas.setColor(0xff555555);
+        bool hovered = isHoveredRect(x, y, w, rowH);
+        bool pressed = isPressedRect(x, y, w, rowH);
+        canvas.setColor(selected ? 0xffff8833 : (pressed ? 0xff888888 : (hovered ? 0xff777777 : 0xff555555)));
         canvas.ring(rx, ry, r * 2, 1.5f);
         if (selected) { canvas.setColor(0xffff8833); canvas.circle(rx + 3, ry + 3, r * 2 - 6); }
-        canvas.setColor(0xffcccccc);
+        canvas.setColor(pressed ? 0xffffffff : (hovered ? 0xffe0e0e0 : 0xffcccccc));
         canvas.text(label, font, visage::Font::kLeft, x + r * 2 + 12, y, w - r * 2 - 12, rowH);
     }
 
@@ -548,12 +641,33 @@ private:
         canvas.text(label, font, visage::Font::kLeft, x, y, w * 0.6f, rowH);
         float toggleW = 36.0f, toggleH = 16.0f;
         float tx = x + w - toggleW - 4, ty = y + (rowH - toggleH) / 2.0f;
-        canvas.setColor(on ? 0xffff8833 : 0xff444444);
+        bool hovered = isHoveredRect(tx, ty, toggleW, toggleH);
+        bool pressed = isPressedRect(tx, ty, toggleW, toggleH);
+        canvas.setColor(on
+                            ? (pressed ? 0xffffaa55 : (hovered ? 0xffff9944 : 0xffff8833))
+                            : (pressed ? 0xff5a5a5a : (hovered ? 0xff505050 : 0xff444444)));
         canvas.roundedRectangle(tx, ty, toggleW, toggleH, toggleH / 2.0f);
+        if (hovered || pressed) {
+            canvas.setColor(pressed ? 0xffff8833 : 0xff888888);
+            canvas.roundedRectangleBorder(tx, ty, toggleW, toggleH, toggleH / 2.0f, 1.0f);
+        }
         float thumbSize = toggleH - 4;
         float thumbX = on ? tx + toggleW - thumbSize - 2 : tx + 2;
-        canvas.setColor(0xffffffff);
+        canvas.setColor(pressed ? 0xfff5f5f5 : 0xffffffff);
         canvas.circle(thumbX, ty + 2, thumbSize);
+    }
+
+    void drawActionButton(visage::Canvas& canvas, const visage::Font& font,
+                          float x, float y, float width, float rowH, const char* label) {
+        float buttonH = rowH;
+        bool hovered = isHoveredRect(x, y, width, buttonH);
+        bool pressed = isPressedRect(x, y, width, buttonH);
+        canvas.setColor(pressed ? 0xff2d2d2d : (hovered ? 0xff3a3a3a : 0xff333333));
+        canvas.roundedRectangle(x, y, width, buttonH, 5.0f);
+        canvas.setColor(pressed ? 0xffff8833 : (hovered ? 0xff888888 : 0xff666666));
+        canvas.roundedRectangleBorder(x, y, width, buttonH, 5.0f, 1.0f);
+        canvas.setColor(pressed ? 0xffffffff : 0xffdddddd);
+        canvas.text(label, font, visage::Font::kCenter, x, y, width, buttonH);
     }
 
     void drawNumberValue(visage::Canvas& canvas, const visage::Font& font,
@@ -563,17 +677,26 @@ private:
         canvas.text(label, font, visage::Font::kLeft, x, y, w * 0.5f, rowH);
         float btnSize = 20.0f, valueW = 40.0f;
         float rightX = x + w - btnSize * 2 - valueW - 4;
+        float btnY = y + (rowH - btnSize) / 2;
+        bool minusHovered = isHoveredRect(rightX, btnY, btnSize, btnSize);
+        bool minusPressed = isPressedRect(rightX, btnY, btnSize, btnSize);
+        bool plusHovered = isHoveredRect(rightX + btnSize + valueW, btnY, btnSize, btnSize);
+        bool plusPressed = isPressedRect(rightX + btnSize + valueW, btnY, btnSize, btnSize);
 
-        canvas.setColor(value > min ? 0xff555555 : 0xff333333);
-        canvas.roundedRectangle(rightX, y + (rowH - btnSize) / 2, btnSize, btnSize, 4.0f);
+        canvas.setColor(value > min
+                            ? (minusPressed ? 0xff666666 : (minusHovered ? 0xff5c5c5c : 0xff555555))
+                            : 0xff333333);
+        canvas.roundedRectangle(rightX, btnY, btnSize, btnSize, 4.0f);
         canvas.setColor(value > min ? 0xffcccccc : 0xff555555);
         canvas.text("-", font, visage::Font::kCenter, rightX, y, btnSize, rowH);
 
         canvas.setColor(0xffffffff);
         canvas.text(std::to_string(value).c_str(), font, visage::Font::kCenter, rightX + btnSize, y, valueW, rowH);
 
-        canvas.setColor(value < max ? 0xff555555 : 0xff333333);
-        canvas.roundedRectangle(rightX + btnSize + valueW, y + (rowH - btnSize) / 2, btnSize, btnSize, 4.0f);
+        canvas.setColor(value < max
+                            ? (plusPressed ? 0xff666666 : (plusHovered ? 0xff5c5c5c : 0xff555555))
+                            : 0xff333333);
+        canvas.roundedRectangle(rightX + btnSize + valueW, btnY, btnSize, btnSize, 4.0f);
         canvas.setColor(value < max ? 0xffcccccc : 0xff555555);
         canvas.text("+", font, visage::Font::kCenter, rightX + btnSize + valueW, y, btnSize, rowH);
     }
@@ -602,14 +725,30 @@ private:
                       const char* label, bool checked) {
         float boxSize = 12.0f;
         float bx = x + 2, by = y + (h - boxSize) / 2.0f;
-        canvas.setColor(checked ? 0xffff8833 : 0xff444444);
+        bool hovered = isHoveredRect(x, y, w, h);
+        bool pressed = isPressedRect(x, y, w, h);
+        canvas.setColor(checked
+                            ? (pressed ? 0xffffaa55 : (hovered ? 0xffff9944 : 0xffff8833))
+                            : (pressed ? 0xff555555 : (hovered ? 0xff4d4d4d : 0xff444444)));
         canvas.roundedRectangle(bx, by, boxSize, boxSize, 2.0f);
         if (checked) {
             canvas.setColor(0xff000000);
             canvas.text("v", font, visage::Font::kCenter, bx, by - 1, boxSize, boxSize + 2);
         }
-        canvas.setColor(0xffcccccc);
+        canvas.setColor(pressed ? 0xffffffff : (hovered ? 0xffe0e0e0 : 0xffcccccc));
         canvas.text(label, font, visage::Font::kLeft, x + boxSize + 6, y, w - boxSize - 8, h);
+    }
+
+    static bool pointInRect(float px, float py, float x, float y, float w, float h) {
+        return px >= x && px <= x + w && py >= y && py <= y + h;
+    }
+
+    bool isHoveredRect(float x, float y, float w, float h) const {
+        return mouseInside_ && pointInRect(mouseX_, mouseY_, x, y, w, h);
+    }
+
+    bool isPressedRect(float x, float y, float w, float h) const {
+        return mouseIsDown_ && pointInRect(mouseDownX_, mouseDownY_, x, y, w, h);
     }
 
     void handleNumberClick(float mx, float my, float cy, float rowH,
@@ -660,4 +799,10 @@ private:
     float lfoRate_[2] = { 4.0f, 4.0f };
     float lfoDepth_[2] = { 0.5f, 0.5f };
     bool lfoDest_[2][14] = {};
+    float mouseX_ = 0.0f;
+    float mouseY_ = 0.0f;
+    float mouseDownX_ = 0.0f;
+    float mouseDownY_ = 0.0f;
+    bool mouseInside_ = false;
+    bool mouseIsDown_ = false;
 };

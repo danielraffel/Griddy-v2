@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <title>Griddy Third-Party Credits and Licensing</title>
+    <style>
+        :root {
+            color-scheme: light dark;
+            --bg: #f4f4f6;
+            --panel: #ffffff;
+            --panel-alt: #f7f7f9;
+            --text: #202225;
+            --text-muted: #5c6570;
+            --border: #d7d9dd;
+            --accent: #ff8833;
+            --accent-soft: rgba(255, 136, 51, 0.12);
+            --code-bg: #f0f2f4;
+            --shadow: 0 12px 32px rgba(16, 24, 40, 0.08);
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #111214;
+                --panel: #1a1c20;
+                --panel-alt: #202329;
+                --text: #f1f3f5;
+                --text-muted: #a7b0ba;
+                --border: #343840;
+                --accent: #ff9a52;
+                --accent-soft: rgba(255, 154, 82, 0.14);
+                --code-bg: #17191d;
+                --shadow: 0 16px 40px rgba(0, 0, 0, 0.35);
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 32px 18px 48px;
+            background: radial-gradient(circle at top, var(--accent-soft), transparent 38%), var(--bg);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            line-height: 1.6;
+        }
+
+        main {
+            max-width: 980px;
+            margin: 0 auto;
+            background: var(--panel);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            box-shadow: var(--shadow);
+            padding: 32px;
+        }
+
+        h1, h2, h3 {
+            margin: 0 0 12px;
+            line-height: 1.2;
+        }
+
+        h1 {
+            font-size: clamp(2rem, 4vw, 2.8rem);
+            padding-bottom: 14px;
+            border-bottom: 3px solid var(--accent);
+        }
+
+        h2 {
+            font-size: 1.35rem;
+        }
+
+        h3 {
+            font-size: 1rem;
+            color: var(--text-muted);
+        }
+
+        p, li {
+            color: var(--text);
+        }
+
+        .lede {
+            margin: 18px 0 0;
+            color: var(--text-muted);
+            max-width: 72ch;
+        }
+
+        .meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            margin: 20px 0 28px;
+        }
+
+        .pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            border: 1px solid var(--border);
+            border-radius: 999px;
+            background: var(--panel-alt);
+            color: var(--text-muted);
+            font-size: 0.92rem;
+        }
+
+        .section {
+            margin-top: 28px;
+            padding: 22px;
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            background: var(--panel-alt);
+        }
+
+        .section:first-of-type {
+            margin-top: 0;
+        }
+
+        .metadata {
+            margin: 10px 0 14px;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .metadata strong {
+            color: var(--text);
+        }
+
+        a {
+            color: var(--accent);
+        }
+
+        ul {
+            margin: 12px 0 0 20px;
+            padding: 0;
+        }
+
+        code,
+        pre {
+            font-family: "SFMono-Regular", "Consolas", "Menlo", monospace;
+            font-size: 0.92rem;
+        }
+
+        code {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            padding: 2px 6px;
+        }
+
+        pre {
+            margin: 12px 0 0;
+            padding: 16px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-break: break-word;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--code-bg);
+        }
+
+        details {
+            margin-top: 14px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: var(--panel);
+        }
+
+        summary {
+            cursor: pointer;
+            padding: 12px 14px;
+            font-weight: 600;
+            color: var(--text);
+        }
+
+        details > div {
+            padding: 0 14px 14px;
+        }
+
+        .note {
+            margin-top: 26px;
+            padding: 16px 18px;
+            border-left: 4px solid var(--accent);
+            border-radius: 10px;
+            background: var(--accent-soft);
+            color: var(--text);
+        }
+
+        .footer {
+            margin-top: 32px;
+            padding-top: 18px;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+            font-size: 0.94rem;
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <h1>Griddy Third-Party Credits and Licensing</h1>
+        <p class="lede">
+            This page documents the direct third-party components observed in the local Griddy macOS Release build as of March 10, 2026.
+            It is intended to ship with the product and to refresh <code>~/Library/Caches/Griddy/Griddy_Licenses.html</code> whenever the
+            acknowledgements button is opened from the plugin.
+        </p>
+
+        <div class="meta">
+            <div class="pill">Last updated: March 10, 2026</div>
+        </div>
+
+        <section class="section">
+            <h2>JUCE Framework</h2>
+            <div class="metadata">
+                <strong>Source:</strong> <a href="https://github.com/juce-framework/JUCE">juce-framework/JUCE</a><br>
+                <strong>License:</strong> AGPL v3.0 and commercial licensing<br>
+                <strong>Used for:</strong> plugin framework, audio and MIDI I/O, host integration, windowing
+            </div>
+            <p>
+                Griddy uses JUCE as its primary application and plugin framework. The local project is configured against JUCE
+                <code>8.0.12</code> in the build configuration.
+            </p>
+        </section>
+
+        <section class="section">
+            <h2>Mutable Instruments Grids</h2>
+            <div class="metadata">
+                <strong>Original project:</strong> <a href="https://github.com/pichenettes/eurorack/tree/master/grids">Mutable Instruments Grids</a><br>
+                <strong>License:</strong> GNU General Public License v3.0<br>
+                <strong>Copyright:</strong> Emilie Gillet
+            </div>
+            <p>
+                Griddy incorporates Grids-derived rhythm generation code and pattern data as the musical core of the plugin.
+            </p>
+        </section>
+
+        <section class="section">
+            <h2>Visage</h2>
+            <div class="metadata">
+                <strong>Source:</strong> <a href="https://github.com/VitalAudio/visage">VitalAudio/visage</a><br>
+                <strong>License:</strong> MIT License<br>
+                <strong>Copyright:</strong> Vital Audio, LLC
+            </div>
+            <p>
+                Visage provides the GPU-rendered UI layer used by the Griddy editor.
+            </p>
+            <details>
+                <summary>MIT license text</summary>
+                <div>
+<pre>Copyright Vital Audio, LLC
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.</pre>
+                </div>
+            </details>
+        </section>
+
+        <section class="section">
+            <h2>bgfx, bimg, and bx</h2>
+            <div class="metadata">
+                <strong>Source:</strong> local build links against <code>bgfx</code>, <code>bimg</code>, and <code>bx</code><br>
+                <strong>License:</strong> BSD 2-Clause License<br>
+                <strong>Copyright:</strong> 2010-2025 Branimir Karadzic
+            </div>
+            <p>
+                These libraries are pulled in through the Visage rendering stack and are linked into the macOS build for graphics,
+                texture handling, and low-level platform support.
+            </p>
+            <details>
+                <summary>BSD 2-Clause license text used by bgfx, bimg, and bx</summary>
+                <div>
+<pre>Copyright 2010-2025 Branimir Karadzic
+
+Redistribution and use in source and binary forms, with or without modification,
+are permitted provided that the following conditions are met:
+
+1. Redistributions of source code must retain the above copyright notice, this
+   list of conditions and the following disclaimer.
+
+2. Redistributions in binary form must reproduce the above copyright notice,
+   this list of conditions and the following disclaimer in the documentation
+   and/or other materials provided with the distribution.
+
+THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND
+ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT,
+INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
+LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+OF THE POSSIBILITY OF SUCH DAMAGE.</pre>
+                </div>
+            </details>
+        </section>
+
+        <section class="section">
+            <h2>FreeType</h2>
+            <div class="metadata">
+                <strong>Source:</strong> local build links against <code>freetype</code><br>
+                <strong>License:</strong> FreeType License or GPLv2+<br>
+                <strong>Used for:</strong> font rasterization through the rendering stack
+            </div>
+            <p>
+                The local FreeType distribution is dual-licensed. Its top-level license text states that the project can be used
+                under either the FreeType License or GPLv2 and later.
+            </p>
+            <details>
+                <summary>FreeType licensing note from the local distribution</summary>
+                <div>
+<pre>FREETYPE LICENSES
+-----------------
+
+The FreeType 2 font engine is copyrighted work and cannot be used legally
+without a software license. In order to make this project usable to a vast
+majority of developers, we distribute it under two mutually exclusive
+open-source licenses.
+
+This means that you must choose one of the two licenses described below,
+then obey all its terms and conditions when using FreeType 2 in any of your
+projects or products.
+
+- The FreeType License, found in the file docs/FTL.TXT.
+- The GNU General Public License version 2, found in docs/GPLv2.TXT
+  (any later version can be used also).</pre>
+                </div>
+            </details>
+        </section>
+
+        <section class="section">
+            <h2>Bundled UI Fonts</h2>
+            <div class="metadata">
+                <strong>Files observed in the local Visage tree:</strong> <code>Lato-Regular.ttf</code>, <code>DroidSansMono.ttf</code><br>
+                <strong>License file:</strong> Apache License 2.0 in <code>external/visage/visage_graphics/fonts/LICENSE</code>
+            </div>
+            <p>
+                Griddy uses embedded fonts distributed with Visage. The local font bundle includes an Apache 2.0 license file.
+            </p>
+            <details>
+                <summary>Apache 2.0 notice</summary>
+                <div>
+<pre>Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</pre>
+                </div>
+            </details>
+        </section>
+
+        <section class="section">
+            <h2>Additional Bundled Notices</h2>
+            <div class="metadata">
+                <strong>Confirmed from:</strong> the local JUCE <code>LICENSE.md</code> dependency manifest and the local Visage source tree
+            </div>
+            <p>
+                The current Griddy macOS source tree also carries bundled upstream components through JUCE and Visage beyond the
+                top-level items listed above.
+            </p>
+            <ul>
+                <li><code>stb_image_resize2</code> is included through Visage image handling and is distributed as public domain or MIT-licensed code.</li>
+                <li>JUCE's local dependency manifest lists <code>AudioUnitSDK</code> (Apache 2.0), <code>FLAC</code> (BSD), <code>Ogg Vorbis</code> (BSD), <code>jpeglib</code> (Independent JPEG Group), <code>pnglib</code> and <code>zlib</code> (zlib), <code>HarfBuzz</code> (Old MIT), and <code>SheenBidi</code> (Apache 2.0).</li>
+                <li>The same JUCE tree also carries format SDK notices for <code>VST3</code> (MIT), <code>LV2</code> (ISC), and <code>AAX</code> (Avid AAX license or GPLv3) for formats built from this source tree.</li>
+            </ul>
+            <p>
+                Those entries come from upstream frameworks used by Griddy rather than separate top-level libraries unique to this project,
+                but they are worth disclosing because the older cached page did not mention them.
+            </p>
+        </section>
+
+        <div class="note">
+            The previous cached acknowledgements page was missing at least the direct rendering-stack dependencies
+            <code>bgfx</code>, <code>bimg</code>, <code>bx</code>, <code>freetype</code>, and the bundled Visage fonts.
+            This refreshed page now also calls out the additional bundled notices that were visible in the local JUCE and Visage trees
+            as of March 10, 2026.
+        </div>
+
+        <div class="footer">
+            For licensing questions related to this local build of Griddy, contact
+            <a href="mailto:thegenerouscorp@gmail.com">thegenerouscorp@gmail.com</a>.
+        </div>
+    </main>
+</body>
+</html>

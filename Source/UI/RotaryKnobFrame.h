@@ -25,6 +25,8 @@ public:
     }
 
     std::function<void(float)> onValueChange;
+    std::function<void()> onGestureStart;
+    std::function<void()> onGestureEnd;
 
     void draw(visage::Canvas& canvas) override {
         float w = width();
@@ -85,6 +87,9 @@ public:
     void mouseDown(const visage::MouseEvent& e) override {
         dragStartY_ = e.position.y;
         dragStartValue_ = value_;
+        dragging_ = true;
+        if (onGestureStart)
+            onGestureStart();
     }
 
     void mouseDrag(const visage::MouseEvent& e) override {
@@ -99,6 +104,15 @@ public:
             onValueChange(value_);
     }
 
+    void mouseUp(const visage::MouseEvent&) override {
+        if (!dragging_)
+            return;
+
+        dragging_ = false;
+        if (onGestureEnd)
+            onGestureEnd();
+    }
+
 private:
     std::string label_;
     unsigned int color_;
@@ -106,4 +120,5 @@ private:
     float dragStartY_ = 0.0f;
     float dragStartValue_ = 0.0f;
     bool hovering_ = false;
+    bool dragging_ = false;
 };

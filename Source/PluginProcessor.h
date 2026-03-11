@@ -1,5 +1,6 @@
 #pragma once
 
+#include <atomic>
 #include <juce_audio_processors/juce_audio_processors.h>
 #include "Grids/GridsEngine.h"
 
@@ -89,18 +90,18 @@ public:
     void setResetMidiCC(int cc) { resetMidiCC = cc; }
 
 #ifdef ENABLE_MODULATION_MATRIX
-    float getModulatedBDDensity();
-    float getModulatedSDDensity();
-    float getModulatedHHDensity();
-    float getModulatedChaos();
-    float getModulatedSwing();
-    float getModulatedX();
-    float getModulatedY();
-    bool isResetModulated();
+    float getModulatedBDDensity() const;
+    float getModulatedSDDensity() const;
+    float getModulatedHHDensity() const;
+    float getModulatedChaos() const;
+    float getModulatedSwing() const;
+    float getModulatedX() const;
+    float getModulatedY() const;
+    bool isResetModulated() const;
 #ifdef ENABLE_VELOCITY_SYSTEM
-    float getModulatedBDVelocity();
-    float getModulatedSDVelocity();
-    float getModulatedHHVelocity();
+    float getModulatedBDVelocity() const;
+    float getModulatedSDVelocity() const;
+    float getModulatedHHVelocity() const;
 #endif
 #endif
 
@@ -111,6 +112,19 @@ private:
 
 #ifdef ENABLE_MODULATION_MATRIX
     ModulationMatrix modulationMatrix;
+    std::atomic<float> modulatedBDDensity_ { 0.5f };
+    std::atomic<float> modulatedSDDensity_ { 0.5f };
+    std::atomic<float> modulatedHHDensity_ { 0.5f };
+    std::atomic<float> modulatedChaos_ { 0.0f };
+    std::atomic<float> modulatedSwing_ { 0.5f };
+    std::atomic<float> modulatedX_ { 0.5f };
+    std::atomic<float> modulatedY_ { 0.5f };
+    std::atomic<bool> resetModulated_ { false };
+#ifdef ENABLE_VELOCITY_SYSTEM
+    std::atomic<float> modulatedBDVelocity_ { 0.5f };
+    std::atomic<float> modulatedSDVelocity_ { 0.5f };
+    std::atomic<float> modulatedHHVelocity_ { 0.5f };
+#endif
 #endif
 
     // Timing

@@ -6,16 +6,24 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET "15.0" CACHE STRING "Minimum macOS version")
 # Get environment variables
 set(PROJECT_NAME $ENV{PROJECT_NAME})
 set(PROJECT_BUNDLE_ID $ENV{PROJECT_BUNDLE_ID})
+set(PLUGIN_CODE $ENV{PLUGIN_CODE})
+set(PLUGIN_MANUFACTURER_CODE $ENV{PLUGIN_MANUFACTURER_CODE})
 set(JUCE_REPO $ENV{JUCE_REPO})
 set(JUCE_TAG $ENV{JUCE_TAG})
 set(COMPANY_NAME $ENV{COMPANY_NAME})
 
 # Fallback defaults if env vars not set
 if(NOT PROJECT_NAME)
-    set(PROJECT_NAME "griddy-v2")
+    set(PROJECT_NAME "Griddy")
 endif()
 if(NOT PROJECT_BUNDLE_ID)
-    set(PROJECT_BUNDLE_ID "com.generouscorp.griddy-v2")
+    set(PROJECT_BUNDLE_ID "com.danielraffel.griddy")
+endif()
+if(NOT PLUGIN_CODE)
+    set(PLUGIN_CODE "GRDM")
+endif()
+if(NOT PLUGIN_MANUFACTURER_CODE)
+    set(PLUGIN_MANUFACTURER_CODE "Juce")
 endif()
 if(NOT JUCE_REPO)
     set(JUCE_REPO "https://github.com/juce-framework/JUCE.git")
@@ -68,6 +76,12 @@ set(VISAGE_BUILD_EXAMPLES OFF CACHE BOOL "Build Visage examples" FORCE)
 set(VISAGE_BUILD_TESTS OFF CACHE BOOL "Build Visage tests" FORCE)
 add_subdirectory(external/visage)
 
+set(GRIDDY_PLUGIN_RESOURCES
+    ${CMAKE_SOURCE_DIR}/griddy-licenses.html
+)
+
+juce_add_binary_data(${PROJECT_NAME}_Resources SOURCES ${GRIDDY_PLUGIN_RESOURCES})
+
 # ==============================================================================
 # macOS Plugin Target (skip when cross-compiling for iOS)
 # ==============================================================================
@@ -91,8 +105,8 @@ juce_add_plugin(${PROJECT_NAME}
     NEEDS_EDITOR TRUE
     EDITOR_WANTS_KEYBOARD_FOCUS TRUE
     COPY_PLUGIN_AFTER_BUILD TRUE
-    PLUGIN_MANUFACTURER_CODE GECO
-    PLUGIN_CODE GRDY
+    PLUGIN_MANUFACTURER_CODE ${PLUGIN_MANUFACTURER_CODE}
+    PLUGIN_CODE ${PLUGIN_CODE}
     FORMATS AU VST3 Standalone
     PRODUCT_NAME ${PROJECT_NAME}
     VERSION ${PLUGIN_VERSION}
@@ -138,6 +152,7 @@ target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_17)
 
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_SOURCE_DIR}/Source
+    ${CMAKE_BINARY_DIR}/juce_binarydata_${PROJECT_NAME}_Resources/JuceLibraryCode
     ${CMAKE_SOURCE_DIR}/external/visage
     ${CMAKE_SOURCE_DIR}/external/visage/visage_ui
     ${CMAKE_SOURCE_DIR}/external/visage/visage_graphics
@@ -171,6 +186,7 @@ target_link_libraries(${PROJECT_NAME} PRIVATE
     juce::juce_gui_basics
     juce::juce_gui_extra
     visage
+    ${PROJECT_NAME}_Resources
 )
 
 # ==============================================================================

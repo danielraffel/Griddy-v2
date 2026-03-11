@@ -11,13 +11,37 @@ GriddyAudioProcessor::GriddyAudioProcessor()
        parameters(*this, nullptr, "GridsParameters", createParameterLayout())
 {
     // Initialize engine with parameter values
-    gridsEngine.setX(*parameters.getRawParameterValue("x"));
-    gridsEngine.setY(*parameters.getRawParameterValue("y"));
-    gridsEngine.setBDDensity(*parameters.getRawParameterValue("density_1_bd"));
-    gridsEngine.setSDDensity(*parameters.getRawParameterValue("density_2_sd"));
-    gridsEngine.setHHDensity(*parameters.getRawParameterValue("density_3_hh"));
-    gridsEngine.setChaos(*parameters.getRawParameterValue("chaos"));
-    gridsEngine.setSwing(*parameters.getRawParameterValue("swing"));
+    float x = parameters.getRawParameterValue("x")->load();
+    float y = parameters.getRawParameterValue("y")->load();
+    float bdDensity = parameters.getRawParameterValue("density_1_bd")->load();
+    float sdDensity = parameters.getRawParameterValue("density_2_sd")->load();
+    float hhDensity = parameters.getRawParameterValue("density_3_hh")->load();
+    float chaos = parameters.getRawParameterValue("chaos")->load();
+    float swing = parameters.getRawParameterValue("swing")->load();
+
+    gridsEngine.setX(x);
+    gridsEngine.setY(y);
+    gridsEngine.setBDDensity(bdDensity);
+    gridsEngine.setSDDensity(sdDensity);
+    gridsEngine.setHHDensity(hhDensity);
+    gridsEngine.setChaos(chaos);
+    gridsEngine.setSwing(swing);
+
+#ifdef ENABLE_MODULATION_MATRIX
+    modulatedX_.store(x);
+    modulatedY_.store(y);
+    modulatedBDDensity_.store(bdDensity);
+    modulatedSDDensity_.store(sdDensity);
+    modulatedHHDensity_.store(hhDensity);
+    modulatedChaos_.store(chaos);
+    modulatedSwing_.store(swing);
+    resetModulated_.store(false);
+#ifdef ENABLE_VELOCITY_SYSTEM
+    modulatedBDVelocity_.store(parameters.getRawParameterValue("velocity_1_bd")->load());
+    modulatedSDVelocity_.store(parameters.getRawParameterValue("velocity_2_sd")->load());
+    modulatedHHVelocity_.store(parameters.getRawParameterValue("velocity_3_hh")->load());
+#endif
+#endif
 }
 
 GriddyAudioProcessor::~GriddyAudioProcessor()
@@ -335,6 +359,15 @@ void GriddyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
                                                    *parameters.getRawParameterValue("chaos"));
     float swing = modulationMatrix.applyModulation(ModulationMatrix::SWING,
                                                    *parameters.getRawParameterValue("swing"));
+    float swingForTiming = swing;
+#ifdef ENABLE_VELOCITY_SYSTEM
+    float bdVelocity = modulationMatrix.applyModulation(ModulationMatrix::BD_VELOCITY,
+                                                        *parameters.getRawParameterValue("velocity_1_bd"));
+    float sdVelocity = modulationMatrix.applyModulation(ModulationMatrix::SD_VELOCITY,
+                                                        *parameters.getRawParameterValue("velocity_2_sd"));
+    float hhVelocity = modulationMatrix.applyModulation(ModulationMatrix::HH_VELOCITY,
+                                                        *parameters.getRawParameterValue("velocity_3_hh"));
+#endif
 
     gridsEngine.setX(xValue);
     gridsEngine.setY(yValue);
@@ -343,14 +376,37 @@ void GriddyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
     gridsEngine.setHHDensity(hhDensity);
     gridsEngine.setChaos(chaos);
     gridsEngine.setSwing(swing);
+
+    modulatedX_.store(xValue);
+    modulatedY_.store(yValue);
+    modulatedBDDensity_.store(bdDensity);
+    modulatedSDDensity_.store(sdDensity);
+    modulatedHHDensity_.store(hhDensity);
+    modulatedChaos_.store(chaos);
+    modulatedSwing_.store(swing);
+    resetModulated_.store(std::abs(modulationMatrix.getModulation(ModulationMatrix::PATTERN_RESET)) > 0.5f);
+#ifdef ENABLE_VELOCITY_SYSTEM
+    modulatedBDVelocity_.store(bdVelocity);
+    modulatedSDVelocity_.store(sdVelocity);
+    modulatedHHVelocity_.store(hhVelocity);
+#endif
 #else
-    gridsEngine.setX(*parameters.getRawParameterValue("x"));
-    gridsEngine.setY(*parameters.getRawParameterValue("y"));
-    gridsEngine.setBDDensity(*parameters.getRawParameterValue("density_1_bd"));
-    gridsEngine.setSDDensity(*parameters.getRawParameterValue("density_2_sd"));
-    gridsEngine.setHHDensity(*parameters.getRawParameterValue("density_3_hh"));
-    gridsEngine.setChaos(*parameters.getRawParameterValue("chaos"));
-    gridsEngine.setSwing(*parameters.getRawParameterValue("swing"));
+    float xValue = *parameters.getRawParameterValue("x");
+    float yValue = *parameters.getRawParameterValue("y");
+    float bdDensity = *parameters.getRawParameterValue("density_1_bd");
+    float sdDensity = *parameters.getRawParameterValue("density_2_sd");
+    float hhDensity = *parameters.getRawParameterValue("density_3_hh");
+    float chaos = *parameters.getRawParameterValue("chaos");
+    float swing = *parameters.getRawParameterValue("swing");
+    float swingForTiming = swing;
+
+    gridsEngine.setX(xValue);
+    gridsEngine.setY(yValue);
+    gridsEngine.setBDDensity(bdDensity);
+    gridsEngine.setSDDensity(sdDensity);
+    gridsEngine.setHHDensity(hhDensity);
+    gridsEngine.setChaos(chaos);
+    gridsEngine.setSwing(swing);
 #endif
 
     // Get MIDI settings
@@ -400,7 +456,7 @@ void GriddyAudioProcessor::processBlock (juce::AudioBuffer<float>& buffer,
             double samplePpq = currentPpq + (sample * ppqPerSample);
 
             // Apply swing adjustment
-            double swingValue = *parameters.getRawParameterValue("swing");
+            double swingValue = swingForTiming;
             double adjustedPpq = samplePpq;
 
             if (swingValue != 0.5f) {
@@ -599,72 +655,18 @@ void GriddyAudioProcessor::setStateInformation (const void* data, int sizeInByte
 }
 
 #ifdef ENABLE_MODULATION_MATRIX
-float GriddyAudioProcessor::getModulatedBDDensity()
-{
-    float baseValue = parameters.getRawParameterValue("density_1_bd")->load();
-    return modulationMatrix.applyModulation(ModulationMatrix::BD_DENSITY, baseValue);
-}
-
-float GriddyAudioProcessor::getModulatedSDDensity()
-{
-    float baseValue = parameters.getRawParameterValue("density_2_sd")->load();
-    return modulationMatrix.applyModulation(ModulationMatrix::SD_DENSITY, baseValue);
-}
-
-float GriddyAudioProcessor::getModulatedHHDensity()
-{
-    float baseValue = parameters.getRawParameterValue("density_3_hh")->load();
-    return modulationMatrix.applyModulation(ModulationMatrix::HH_DENSITY, baseValue);
-}
-
-float GriddyAudioProcessor::getModulatedChaos()
-{
-    float baseValue = parameters.getRawParameterValue("chaos")->load();
-    return modulationMatrix.applyModulation(ModulationMatrix::CHAOS, baseValue);
-}
-
-float GriddyAudioProcessor::getModulatedSwing()
-{
-    float baseValue = parameters.getRawParameterValue("swing")->load();
-    return modulationMatrix.applyModulation(ModulationMatrix::SWING, baseValue);
-}
-
-float GriddyAudioProcessor::getModulatedX()
-{
-    float baseValue = parameters.getRawParameterValue("x")->load();
-    return modulationMatrix.applyModulation(ModulationMatrix::PATTERN_X, baseValue);
-}
-
-float GriddyAudioProcessor::getModulatedY()
-{
-    float baseValue = parameters.getRawParameterValue("y")->load();
-    return modulationMatrix.applyModulation(ModulationMatrix::PATTERN_Y, baseValue);
-}
-
-bool GriddyAudioProcessor::isResetModulated()
-{
-    float modulation = modulationMatrix.getModulation(ModulationMatrix::PATTERN_RESET);
-    return std::abs(modulation) > 0.5f;
-}
-
+float GriddyAudioProcessor::getModulatedBDDensity() const { return modulatedBDDensity_.load(); }
+float GriddyAudioProcessor::getModulatedSDDensity() const { return modulatedSDDensity_.load(); }
+float GriddyAudioProcessor::getModulatedHHDensity() const { return modulatedHHDensity_.load(); }
+float GriddyAudioProcessor::getModulatedChaos() const { return modulatedChaos_.load(); }
+float GriddyAudioProcessor::getModulatedSwing() const { return modulatedSwing_.load(); }
+float GriddyAudioProcessor::getModulatedX() const { return modulatedX_.load(); }
+float GriddyAudioProcessor::getModulatedY() const { return modulatedY_.load(); }
+bool GriddyAudioProcessor::isResetModulated() const { return resetModulated_.load(); }
 #ifdef ENABLE_VELOCITY_SYSTEM
-float GriddyAudioProcessor::getModulatedBDVelocity()
-{
-    float baseValue = parameters.getRawParameterValue("velocity_1_bd")->load();
-    return modulationMatrix.applyModulation(ModulationMatrix::BD_VELOCITY, baseValue);
-}
-
-float GriddyAudioProcessor::getModulatedSDVelocity()
-{
-    float baseValue = parameters.getRawParameterValue("velocity_2_sd")->load();
-    return modulationMatrix.applyModulation(ModulationMatrix::SD_VELOCITY, baseValue);
-}
-
-float GriddyAudioProcessor::getModulatedHHVelocity()
-{
-    float baseValue = parameters.getRawParameterValue("velocity_3_hh")->load();
-    return modulationMatrix.applyModulation(ModulationMatrix::HH_VELOCITY, baseValue);
-}
+float GriddyAudioProcessor::getModulatedBDVelocity() const { return modulatedBDVelocity_.load(); }
+float GriddyAudioProcessor::getModulatedSDVelocity() const { return modulatedSDVelocity_.load(); }
+float GriddyAudioProcessor::getModulatedHHVelocity() const { return modulatedHHVelocity_.load(); }
 #endif
 #endif
 

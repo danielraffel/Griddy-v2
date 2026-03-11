@@ -204,12 +204,12 @@ private:
         }
 
         // Main LED — velocity brightness applied to active LEDs
+        unsigned int fillColor = offColor;
         if (accent)
-            canvas.setColor(scaleColor(accentColor, velBrightness));
+            fillColor = scaleColor(accentColor, velBrightness);
         else if (on)
-            canvas.setColor(scaleColor(onColor, velBrightness));
-        else
-            canvas.setColor(offColor);
+            fillColor = scaleColor(onColor, velBrightness);
+        canvas.setColor(fillColor);
         canvas.circle(x, y, size);
 
         // Highlight for active LEDs
@@ -233,11 +233,19 @@ private:
                 canvas.setColor(glowColor);
                 canvas.circle(x - 2, y - 2, size + 4);
             }
+
             canvas.setColor(0xb0ffffff);
-            float inset = -1.5f;
-            canvas.roundedRectangleBorder(x + inset, y + inset,
-                                          size - inset * 2, size - inset * 2,
-                                          size / 2, 1.5f);
+            float outerInset = -1.5f;
+            canvas.circle(x + outerInset, y + outerInset, size - outerInset * 2);
+
+            canvas.setColor(fillColor);
+            canvas.circle(x, y, size);
+
+            if (on) {
+                unsigned int hlAlpha = static_cast<unsigned int>(0x40 * velBrightness);
+                canvas.setColor((hlAlpha << 24) | 0x00ffffff);
+                canvas.circle(x + 2, y + 1, size * 0.5f);
+            }
         }
     }
 

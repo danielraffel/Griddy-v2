@@ -11,6 +11,7 @@
 #include "UI/SettingsPanelFrame.h"
 #include <juce_audio_processors/juce_audio_processors.h>
 #include <visage_ui/frame.h>
+#include <unordered_set>
 
 class GriddyAudioProcessorEditor : public juce::AudioProcessorEditor,
                                     public juce::Timer,
@@ -34,6 +35,11 @@ private:
     void createVisageUI();
     void layoutChildren();
     void updateUIFromProcessor();
+    void syncSettingsPanelFromProcessor();
+    void beginParameterGesture(juce::RangedAudioParameter* param);
+    void endParameterGesture(juce::RangedAudioParameter* param);
+    void performDiscreteParameterChange(juce::RangedAudioParameter* param, float normalizedValue);
+    void launchAcknowledgements() const;
 
     GriddyAudioProcessor& processorRef;
     std::unique_ptr<JuceVisageBridge> bridge_;
@@ -53,6 +59,8 @@ private:
     RotaryKnobFrame* bdVelKnob_ = nullptr;
     RotaryKnobFrame* sdVelKnob_ = nullptr;
     RotaryKnobFrame* hhVelKnob_ = nullptr;
+    std::unordered_set<juce::RangedAudioParameter*> activeParameterGestures_;
+    int resetGlowFramesRemaining_ = 0;
 
     bool uiCreated_ = false;
 

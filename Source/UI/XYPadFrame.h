@@ -32,6 +32,8 @@ public:
     }
 
     // Callback when user drags
+    std::function<void()> onGestureStart;
+    std::function<void()> onGestureEnd;
     std::function<void(float x, float y)> onValueChange;
 
     void draw(visage::Canvas& canvas) override {
@@ -105,12 +107,20 @@ public:
     }
 
     void mouseDown(const visage::MouseEvent& e) override {
+        if (dragging_)
+            return;
         dragging_ = true;
+        if (onGestureStart)
+            onGestureStart();
         updateFromMouse(e);
     }
 
     void mouseUp(const visage::MouseEvent&) override {
+        if (!dragging_)
+            return;
         dragging_ = false;
+        if (onGestureEnd)
+            onGestureEnd();
         redraw();
     }
 

@@ -1,6 +1,6 @@
-# Griddy v2
+# Griddy
 
-A topographic drum sequencer built with [JUCE](https://juce.com) and [Visage](https://github.com/VitalAudio/visage) GPU-accelerated UI.
+A topographic drum sequencer built with [JUCE](https://juce.com) and a GPU-accelerated [Visage](https://github.com/danielraffel/visage) fork.
 
 ## What is it?
 
@@ -9,7 +9,7 @@ Griddy generates drum patterns by sampling points on a topographic map. Drag an 
 ## Platforms
 
 - **macOS** — Standalone app and AU/VST3 audio plugin (JUCE + Visage UI)
-- **iOS** — Standalone app with full Visage GPU UI and multi-touch support
+- **iOS** — Standalone app with full Visage GPU UI and native multi-touch support
 
 ## Building
 
@@ -30,7 +30,7 @@ cmake -B build-ios -G Xcode -DCMAKE_SYSTEM_NAME=iOS
 - **UI**: `Source/UI/` — Visage frames (XY pad, LED matrix, sliders, knobs)
 - **Bridge**: `Source/Visage/` — Embeds Visage GPU rendering in JUCE plugin window
 - **iOS App**: `App/` — Standalone iOS app with full Visage UI (no JUCE UI components)
-- **Visage**: `external/visage/` — Fork with iOS support and multi-touch
+- **Visage**: `external/visage/` — Fork with iOS touch support and multi-touch handling
 
 ## Features
 
@@ -44,4 +44,4 @@ cmake -B build-ios -G Xcode -DCMAKE_SYSTEM_NAME=iOS
 
 ## Credits
 
-Built with [JUCE](https://juce.com) and [Visage](https://github.com/VitalAudio/visage) by Matt Tytel. Created from the [JUCE-Plugin-Starter](https://github.com/danielraffel/JUCE-Plugin-Starter) template.
+Built with [JUCE](https://juce.com) and a forked [Visage](https://github.com/danielraffel/visage) rendering stack, with an iOS app that uses the fork's iOS touch-event support. Created from the [JUCE-Plugin-Starter](https://github.com/danielraffel/JUCE-Plugin-Starter) template.

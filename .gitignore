@@ -1,5 +1,7 @@
 # CMake
 /build/
+/build-ios/
+/build-ios-sim/
 /CMakeFiles/
 /CMakeCache.txt
 /Makefile
