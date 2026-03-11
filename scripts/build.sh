@@ -1418,6 +1418,14 @@ main() {
     # Allow retries of signing/notarization/package flows without consuming a new version.
     if [[ "${SKIP_VERSION_BUMP:-0}" != "1" ]]; then
         bump_version
+
+        # Reload .env so subsequent packaging and release steps use the bumped version.
+        if [[ -f ".env" ]]; then
+            set -a
+            source .env
+            set +a
+            VERSION="${VERSION_MAJOR:-0}.${VERSION_MINOR:-0}.${VERSION_PATCH:-1}"
+        fi
     else
         echo -e "${YELLOW}Skipping version bump (SKIP_VERSION_BUMP=1)${NC}"
     fi
