@@ -8,7 +8,7 @@ Griddy generates drum patterns by sampling points on a topographic map. Drag an 
 
 ## Download
 
-- [Download the latest macOS installer (PKG)](https://github.com/danielraffel/Griddy/releases/download/v1.0.64/Griddy_1.0.64.pkg)
+- [Download the latest macOS installer (PKG)](https://github.com/danielraffel/Griddy/releases/download/v1.0.65/Griddy_1.0.65.pkg)
 - [View all releases](https://github.com/danielraffel/Griddy/releases)
 
 ## Platforms
